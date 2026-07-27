@@ -1,7 +1,7 @@
 /**
  * ============================================================
  * DASHBOARD APP SCRIPT
- * Trường Tiểu học Nguyễn An Khương - Lê Thành Tạo
+ * Cô Trần Thị Thu Hương & Thầy Lê Thành Tạo
  * ============================================================
  *
  * CÁCH DEPLOY:
