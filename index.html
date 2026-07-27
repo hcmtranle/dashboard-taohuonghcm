@@ -128,8 +128,34 @@
     .gmail-stat { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .gmail-stat:last-child { border-bottom: none; }
 
+    /* ─── Email Live List ───────────────────────────────── */
+    .email-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+    .email-item:last-child { border-bottom: none; }
+    .email-item:hover { background: var(--bg); border-radius: 6px; padding-left: 6px; }
+    .email-unread .email-subject { font-weight: 700; color: var(--text); }
+    .email-read .email-subject { font-weight: 400; color: var(--text2); }
+    .email-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 5px; }
+    .email-dot-read { background: transparent; }
+    .email-from { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+    .email-subject { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .email-time { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+    .email-meta { flex: 1; overflow: hidden; }
+
+    /* ─── News & Video Topics ───────────────────────────── */
+    .news-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .news-item:last-child { border-bottom: none; }
+    .news-source { font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .5px; }
+    .news-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+    .news-title a { color: inherit; text-decoration: none; }
+    .news-title a:hover { color: var(--primary); }
+    .video-topic-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--bg); margin-bottom: 6px; }
+    .video-topic-rank { width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; display:flex;align-items:center;justify-content:center; flex-shrink:0; }
+    .video-topic-rank.hot { background: #ef4444; }
+    .video-topic-text { font-size: 12px; font-weight: 500; flex: 1; }
+    .video-topic-btn { font-size: 11px; color: var(--primary); cursor: pointer; white-space: nowrap; }
+
     /* ─── Calendar Embed ────────────────────────────────── */
-    .calendar-embed { width: 100%; height: 300px; border: none; border-radius: 8px; }
+    .calendar-embed { width: 100%; height: 520px; border: none; border-radius: 8px; }
 
     /* ─── Scheduled Tasks ───────────────────────────────── */
     .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
@@ -185,7 +211,7 @@
     <div class="header-logo">LT</div>
     <div class="header-title">
       <h1 id="dash-title">Dashboard Công Việc</h1>
-      <p id="dash-subtitle">Trường Tiểu học Nguyễn An Khương</p>
+      <p id="dash-subtitle">Lê Thành Tạo & Trần Thị Thu Hương</p>
     </div>
   </div>
   <div class="header-right">
@@ -281,39 +307,37 @@
   <!-- Row 2: Gmail + Calendar + Scheduled Tasks -->
   <div class="grid-3" style="margin-bottom:16px">
 
-    <!-- GMAIL -->
+    <!-- GMAIL LIVE -->
     <div class="card" id="widget-gmail">
       <div class="card-header">
-        <h2><span class="card-icon" style="background:#fef2f2">✉️</span> Gmail</h2>
-        <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="btn btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none">Mở Gmail →</a>
-      </div>
-      <div class="card-body">
-        <div class="alert-bar alert-bar-info" style="margin-bottom:12px">
-          ℹ️ Nhấn các nút bên dưới để mở Gmail trực tiếp
+        <div>
+          <h2><span class="card-icon" style="background:#fef2f2">✉️</span> Gmail
+            <span id="gmail-unread-badge" style="display:none;background:#ef4444;color:#fff;border-radius:99px;font-size:10px;padding:2px 7px;margin-left:6px;font-weight:700"></span>
+          </h2>
+          <div class="subtitle" id="gmail-status">Đang tải email...</div>
         </div>
-        <div class="gmail-links">
-          <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="gmail-action">
-            <span class="gmail-action-icon">📥</span>
-            <span>Hộp thư đến</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn" onclick="loadGmail()" style="font-size:11px;padding:4px 10px">↻</button>
+          <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="btn btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none">Mở →</a>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0 16px">
+        <div id="gmail-list">
+          <div style="text-align:center;padding:20px;color:var(--text3)">Đang tải email...</div>
+        </div>
+      </div>
+      <div class="card-body" style="padding:8px 16px;border-top:1px solid var(--border)">
+        <div class="gmail-links" style="grid-template-columns:repeat(3,1fr)">
+          <a href="https://mail.google.com/mail/u/0/#compose" target="_blank" class="gmail-action" style="padding:8px 4px">
+            <span class="gmail-action-icon" style="font-size:18px">✏️</span>
+            <span>Soạn</span>
           </a>
-          <a href="https://mail.google.com/mail/u/0/#starred" target="_blank" class="gmail-action">
-            <span class="gmail-action-icon">⭐</span>
-            <span>Được gắn sao</span>
+          <a href="https://mail.google.com/mail/u/0/#starred" target="_blank" class="gmail-action" style="padding:8px 4px">
+            <span class="gmail-action-icon" style="font-size:18px">⭐</span>
+            <span>Sao</span>
           </a>
-          <a href="https://mail.google.com/mail/u/0/#sent" target="_blank" class="gmail-action">
-            <span class="gmail-action-icon">📤</span>
-            <span>Đã gửi</span>
-          </a>
-          <a href="https://mail.google.com/mail/u/0/#compose" target="_blank" class="gmail-action">
-            <span class="gmail-action-icon">✏️</span>
-            <span>Soạn email</span>
-          </a>
-          <a href="https://mail.google.com/mail/u/0/#search/is:unread" target="_blank" class="gmail-action">
-            <span class="gmail-action-icon">🔴</span>
-            <span>Chưa đọc</span>
-          </a>
-          <a href="https://mail.google.com/mail/u/0/#label/important" target="_blank" class="gmail-action">
-            <span class="gmail-action-icon">❗</span>
+          <a href="https://mail.google.com/mail/u/0/#label/important" target="_blank" class="gmail-action" style="padding:8px 4px">
+            <span class="gmail-action-icon" style="font-size:18px">❗</span>
             <span>Quan trọng</span>
           </a>
         </div>
@@ -330,9 +354,10 @@
         <iframe
           class="calendar-embed"
           id="calendar-embed"
-          src="https://calendar.google.com/calendar/embed?src=hcmtranle%40gmail.com&ctz=Asia%2FHo_Chi_Minh&mode=WEEK&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%23ffffff&color=%233F51B5"
+          src="https://calendar.google.com/calendar/embed?src=hcmtranle%40gmail.com&ctz=Asia%2FHo_Chi_Minh&mode=WEEK&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&bgcolor=%23ffffff&color=%233F51B5&height=520"
           frameborder="0"
-          scrolling="no">
+          scrolling="yes"
+          allowfullscreen>
         </iframe>
       </div>
     </div>
@@ -505,6 +530,56 @@
 
 </main>
 
+  <!-- Row 5: Tin tức + Gợi ý video -->
+  <div class="grid-2" style="margin-bottom:16px">
+
+    <!-- TIN TỨC GIÁO DỤC -->
+    <div class="card" id="widget-news">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#fef9ec">📰</span> Tin tức giáo dục hôm nay</h2>
+          <div class="subtitle">VnExpress · Dân Trí · Tuổi Trẻ — tự động cập nhật</div>
+        </div>
+        <button class="btn" onclick="loadNews()" style="font-size:11px;padding:4px 10px">↻</button>
+      </div>
+      <div class="card-body" style="padding:0 16px;max-height:320px;overflow-y:auto">
+        <div id="news-list">
+          <div style="text-align:center;padding:20px;color:var(--text3)">Đang tải tin tức...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GỢI Ý VIDEO & BÀI VIẾT -->
+    <div class="card" id="widget-video-ideas">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#fdf4ff">🎬</span> Gợi ý Video & Bài viết hôm nay</h2>
+          <div class="subtitle" id="video-topics-date">Chủ đề theo xu hướng giáo dục VN</div>
+        </div>
+        <button class="btn" onclick="loadNews()" style="font-size:11px;padding:4px 10px">↻</button>
+      </div>
+      <div class="card-body">
+        <div id="video-topics-list">
+          <div style="text-align:center;padding:20px;color:var(--text3)">Đang tải gợi ý...</div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-label">Mở nhanh để sản xuất nội dung</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <a href="https://studio.youtube.com/" target="_blank" class="btn" style="justify-content:flex-start;text-decoration:none;font-size:12px">
+            🎬 YouTube Studio — Upload video
+          </a>
+          <a href="https://trends.google.com/trends/?geo=VN" target="_blank" class="btn" style="justify-content:flex-start;text-decoration:none;font-size:12px">
+            📈 Google Trends VN — Kiểm tra xu hướng
+          </a>
+          <a href="https://docs.google.com/document/u/0/create" target="_blank" class="btn" style="justify-content:flex-start;text-decoration:none;font-size:12px">
+            📝 Google Docs — Soạn bài viết mới
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
 <!-- ─── SETTINGS MODAL ──────────────────────────────────── -->
 <div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center" onclick="closeSettings(event)">
   <div class="card" style="width:480px;max-width:95vw" onclick="e=>e.stopPropagation()">
@@ -552,7 +627,7 @@ async function loadConfig() {
 
 function getDefaultConfig() {
   return {
-    meta: { title:'Dashboard Công Việc', subtitle:'Trường Tiểu học Nguyễn An Khương', ownerEmail:'hcmtranle@gmail.com', autoRefreshSeconds:60 },
+    meta: { title:'Dashboard Công Việc', subtitle:'Lê Thành Tạo & Trần Thị Thu Hương', ownerEmail:'hcmtranle@gmail.com', autoRefreshSeconds:60 },
     appScript: { stockApiUrl:'', sheetsApiUrl:'' },
     stocks: { enabled:true, items:[
       {ticker:'VNM',name:'Vinamilk',lowerAlert:65,upperAlert:72},
@@ -587,7 +662,7 @@ function applyConfig() {
   document.getElementById('dash-subtitle').textContent = CONFIG.meta.subtitle;
 
   // Calendar with email
-  const calUrl = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(CONFIG.meta.ownerEmail)}&ctz=Asia%2FHo_Chi_Minh&mode=WEEK&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0`;
+  const calUrl = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(CONFIG.meta.ownerEmail)}&ctz=Asia%2FHo_Chi_Minh&mode=WEEK&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&height=520`;
   document.getElementById('calendar-embed').src = calUrl;
 
   // Restore saved settings from localStorage
@@ -601,6 +676,8 @@ function applyConfig() {
   loadStocks();
   loadCrypto();
   loadTasks();
+  loadGmail();
+  loadNews();
   updateConnectionStatus();
 }
 
@@ -781,6 +858,8 @@ function refreshAll() {
   loadStocks();
   loadCrypto();
   loadTasks();
+  loadGmail();
+  loadNews();
   updateConnectionStatus();
   showToast('🔄', 'Đang làm mới dữ liệu...', 'info');
 }
@@ -875,6 +954,163 @@ function openStockManager() { openAddStock(); }
 function exportData() {
   showToast('📊', 'Tính năng xuất Sheets cần cấu hình App Script URL', 'info');
   openSettings();
+}
+
+// ─── Gmail Live ───────────────────────────────────────────
+async function loadGmail() {
+  const url = CONFIG?.appScript?.stockApiUrl;
+  const listEl = document.getElementById('gmail-list');
+  const statusEl = document.getElementById('gmail-status');
+  const badgeEl = document.getElementById('gmail-unread-badge');
+
+  if (!url || url.includes('PASTE_YOUR')) {
+    listEl.innerHTML = `<div style="padding:12px 0">
+      <div class="alert-bar alert-bar-warn" style="margin-bottom:8px">⚙️ Cần cấu hình App Script URL để xem email trực tiếp</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="gmail-action"><span class="gmail-action-icon">📥</span><span>Hộp thư đến</span></a>
+        <a href="https://mail.google.com/mail/u/0/#search/is:unread" target="_blank" class="gmail-action"><span class="gmail-action-icon">🔴</span><span>Chưa đọc</span></a>
+      </div></div>`;
+    return;
+  }
+
+  try {
+    listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3)">Đang tải email...</div>';
+    const r = await fetch(`${url}?action=gmail&max=8`);
+    const data = await r.json();
+
+    if (data.error) throw new Error(data.error);
+
+    const emails = data.emails || [];
+    const unread = data.unreadCount || 0;
+
+    if (unread > 0) {
+      badgeEl.textContent = unread + ' chưa đọc';
+      badgeEl.style.display = 'inline';
+    } else {
+      badgeEl.style.display = 'none';
+    }
+
+    if (statusEl) statusEl.textContent = `${unread} chưa đọc • cập nhật ${new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}`;
+
+    if (emails.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3)">Không có email mới</div>';
+      return;
+    }
+
+    listEl.innerHTML = emails.map(function(em) {
+      const cls = em.unread ? 'email-unread' : 'email-read';
+      const dot = em.unread ? 'email-dot' : 'email-dot email-dot-read';
+      const starred = em.starred ? '⭐ ' : '';
+      const gmailUrl = `https://mail.google.com/mail/u/0/#inbox/${em.id}`;
+      return `<div class="email-item ${cls}" onclick="window.open('${gmailUrl}','_blank')">
+        <div class="${dot}"></div>
+        <div class="email-meta">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="email-from">${starred}${escapeHtml(em.from)}</span>
+            <span class="email-time">${em.date}</span>
+          </div>
+          <div class="email-subject">${escapeHtml(em.subject)}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    listEl.innerHTML = `<div style="padding:12px 0">
+      <div class="alert-bar alert-bar-warn" style="margin-bottom:8px">⚠️ Không tải được email — App Script cần quyền truy cập Gmail</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="gmail-action"><span class="gmail-action-icon">📥</span><span>Hộp thư đến</span></a>
+        <a href="https://mail.google.com/mail/u/0/#search/is:unread" target="_blank" class="gmail-action"><span class="gmail-action-icon">🔴</span><span>Chưa đọc</span></a>
+      </div></div>`;
+  }
+}
+
+function escapeHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── News & Video Topics ──────────────────────────────────
+async function loadNews() {
+  const url = CONFIG?.appScript?.stockApiUrl;
+  const newsEl = document.getElementById('news-list');
+  const topicsEl = document.getElementById('video-topics-list');
+  const dateEl = document.getElementById('video-topics-date');
+
+  const days = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+  const now = new Date();
+  if (dateEl) dateEl.textContent = `Gợi ý hôm nay — ${days[now.getDay()]} ${now.getDate()}/${now.getMonth()+1}`;
+
+  if (!url || url.includes('PASTE_YOUR')) {
+    if (newsEl) newsEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3)">Cần cấu hình App Script URL</div>';
+    renderFallbackTopics(topicsEl);
+    return;
+  }
+
+  try {
+    if (newsEl) newsEl.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text3)">Đang tải tin tức...</div>';
+    const r = await fetch(`${url}?action=news`);
+    const data = await r.json();
+
+    // Render news articles
+    const articles = data.articles || [];
+    if (newsEl) {
+      if (articles.length === 0) {
+        newsEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3)">Không có tin tức mới</div>';
+      } else {
+        newsEl.innerHTML = articles.map(a => `
+          <div class="news-item">
+            <div style="flex:1">
+              <div class="news-source">${escapeHtml(a.source)}</div>
+              <div class="news-title"><a href="${a.link}" target="_blank">${escapeHtml(a.title)}</a></div>
+            </div>
+          </div>`).join('');
+      }
+    }
+
+    // Render video topics
+    const topics = data.videoTopics || [];
+    if (topicsEl) {
+      if (topics.length === 0) {
+        renderFallbackTopics(topicsEl);
+      } else {
+        topicsEl.innerHTML = topics.map(t => `
+          <div class="video-topic-item">
+            <div class="video-topic-rank ${t.type==='hot'?'hot':''}">${t.rank}</div>
+            <div class="video-topic-text">${escapeHtml(t.topic)}</div>
+            <span class="video-topic-btn" onclick="searchTopic('${escapeHtml(t.topic)}')">Tìm →</span>
+          </div>`).join('');
+      }
+    }
+
+  } catch(e) {
+    if (newsEl) newsEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3)">Lỗi tải tin tức</div>';
+    renderFallbackTopics(topicsEl);
+  }
+}
+
+function renderFallbackTopics(el) {
+  if (!el) return;
+  const days = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+  const d = new Date().getDay();
+  const allTopics = {
+    0:['Ôn tập tuần qua cho học sinh','Kỹ năng sống cho trẻ tiểu học','Review sách giáo dục'],
+    1:['Phương pháp dạy Toán lớp 4-5','Hoạt động khởi động thú vị','Quản lý lớp học hiệu quả'],
+    2:['Dạy Tiếng Việt sáng tạo','Trò chơi học thuật tiểu học','Sáng kiến kinh nghiệm 2026'],
+    3:['Kiểm tra đánh giá học sinh','AI trong giảng dạy','STEM cho tiểu học'],
+    4:['Hoạt động trải nghiệm','Kết nối phụ huynh - nhà trường','Câu chuyện giáo viên'],
+    5:['Tổng kết tuần - Điểm nổi bật','Chuẩn bị bài tuần tới','Xu hướng giáo dục 2026'],
+    6:['Chủ nhật học cùng con','Đọc sách cùng gia đình','Nghỉ ngơi & nạp năng lượng']
+  };
+  const topics = allTopics[d] || allTopics[1];
+  el.innerHTML = topics.map((t,i) => `
+    <div class="video-topic-item">
+      <div class="video-topic-rank ${i===0?'hot':''}">${i+1}</div>
+      <div class="video-topic-text">${t}</div>
+      <span class="video-topic-btn" onclick="searchTopic('${t}')">Tìm →</span>
+    </div>`).join('');
+}
+
+function searchTopic(topic) {
+  window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(topic + ' giáo dục'), '_blank');
 }
 
 // ─── Init ─────────────────────────────────────────────────
