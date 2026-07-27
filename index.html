@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - Lê Thành Tạo</title>
+  <title>Dashboard - Cô Thu Hương & Thầy Lê Thành Tạo</title>
   <style>
     /* ─── Reset & Base ──────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -518,9 +518,9 @@
         </div>
 
         <div class="divider"></div>
-        <div style="background:var(--bg);border-radius:8px;padding:10px;font-size:12px;color:var(--text2)">
+        <div style="background:linear-gradient(135deg,#f0f7ff,#fdf4ff);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);border:1px solid var(--border)">
           <strong style="color:var(--text)">💡 Thêm ý tưởng mới:</strong><br>
-          Nói với Claude trong Cowork để tự động cập nhật dashboard.<br>
+          Nói với <a href="https://claude.ai" target="_blank" style="color:var(--primary);font-weight:600">Claude trong Cowork</a> để tự động cập nhật dashboard.<br>
           Ví dụ: "Thêm widget theo dõi số học sinh", "Thêm link Zalo OA vào nhanh"...
         </div>
       </div>
@@ -565,8 +565,8 @@
         <div class="divider"></div>
         <div class="section-label">Mở nhanh để sản xuất nội dung</div>
         <div style="display:flex;flex-direction:column;gap:6px">
-          <a href="https://studio.youtube.com/" target="_blank" class="btn" style="justify-content:flex-start;text-decoration:none;font-size:12px">
-            🎬 YouTube Studio — Upload video
+          <a href="https://studio.youtube.com/channel/UCEQfiCmkbi-u_DiZ8hinAQg" target="_blank" class="btn" style="justify-content:flex-start;text-decoration:none;font-size:12px">
+            🎬 YouTube Studio — Kênh của Thầy
           </a>
           <a href="https://trends.google.com/trends/?geo=VN" target="_blank" class="btn" style="justify-content:flex-start;text-decoration:none;font-size:12px">
             📈 Google Trends VN — Kiểm tra xu hướng
@@ -579,6 +579,103 @@
     </div>
 
   </div>
+
+  <!-- Row 6: Search + Todo -->
+  <div class="grid-2" style="margin-bottom:16px">
+
+    <!-- TÌM KIẾM -->
+    <div class="card" id="widget-search">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#eff6ff">🔍</span> Tìm kiếm nhanh</h2>
+          <div class="subtitle">Google · YouTube · VnExpress · CafeF</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input id="search-input" type="text" placeholder="Nhập từ khóa tìm kiếm..."
+            style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px"
+            onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="btn btn-primary" onclick="doSearch()" style="padding:9px 16px">Tìm</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="search-engines">
+          <button class="btn" onclick="searchWith('google')" style="justify-content:center;font-size:12px">🌐 Google</button>
+          <button class="btn" onclick="searchWith('youtube')" style="justify-content:center;font-size:12px">🎬 YouTube</button>
+          <button class="btn" onclick="searchWith('vnexpress')" style="justify-content:center;font-size:12px">📰 VnExpress</button>
+          <button class="btn" onclick="searchWith('cafef')" style="justify-content:center;font-size:12px">💹 CafeF</button>
+        </div>
+        <div class="divider"></div>
+        <div class="section-label">Từ khóa thường dùng</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${['giáo dục tiểu học','STEM 2026','chứng khoán hôm nay','Bitcoin','quản lý trường học','sáng kiến kinh nghiệm'].map(k=>`<span onclick="quickSearch('${k}')" style="cursor:pointer;padding:4px 10px;background:var(--bg);border:1px solid var(--border);border-radius:99px;font-size:11px;color:var(--text2);transition:all .15s" onmouseover="this.style.background='var(--primary)';this.style.color='#fff'" onmouseout="this.style.background='var(--bg)';this.style.color='var(--text2)'">${k}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- VIỆC CẦN LÀM -->
+    <div class="card" id="widget-todo">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#fdf2f8">✅</span> Việc cần làm</h2>
+          <div class="subtitle" id="todo-subtitle">Ưu tiên cao → thấp</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="todo-user" onchange="renderTodos()" style="padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px">
+            <option value="all">Tất cả</option>
+            <option value="Thầy Tạo">Thầy Tạo</option>
+            <option value="Cô Hương">Cô Hương</option>
+          </select>
+          <button class="btn" onclick="openAddTodo()" style="font-size:11px;padding:4px 10px">+ Thêm</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0 16px;max-height:320px;overflow-y:auto">
+        <div id="todo-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+<!-- ─── ADD TODO MODAL ──────────────────────────────────── -->
+<div id="todo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center" onclick="if(event.target===this)closeModal('todo-modal')">
+  <div class="card" style="width:420px;max-width:95vw">
+    <div class="card-header">
+      <h2 id="todo-modal-title">✅ Thêm việc cần làm</h2>
+      <button class="btn" onclick="closeModal('todo-modal')">✕</button>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+      <input type="hidden" id="todo-edit-id">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2)">Tên công việc</label>
+        <input id="todo-title-input" type="text" placeholder="Nhập tên việc cần làm..."
+          style="width:100%;margin-top:4px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--text2)">Người thực hiện</label>
+          <select id="todo-user-input" style="width:100%;margin-top:4px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+            <option>Thầy Tạo</option>
+            <option>Cô Hương</option>
+            <option>Cả hai</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--text2)">Mức độ ưu tiên</label>
+          <select id="todo-priority-input" style="width:100%;margin-top:4px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+            <option value="high">🔴 Khẩn cấp</option>
+            <option value="medium">🟡 Bình thường</option>
+            <option value="low">🟢 Thấp</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2)">Hạn chót</label>
+        <input id="todo-due-input" type="date"
+          style="width:100%;margin-top:4px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+      </div>
+      <button class="btn btn-primary" onclick="saveTodo()" style="width:100%;justify-content:center">💾 Lưu</button>
+    </div>
+  </div>
+</div>
 
 <!-- ─── SETTINGS MODAL ──────────────────────────────────── -->
 <div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center" onclick="closeSettings(event)">
@@ -633,11 +730,19 @@ function getDefaultConfig() {
       {ticker:'VNM',name:'Vinamilk',lowerAlert:65,upperAlert:72},
       {ticker:'VCB',name:'Vietcombank',lowerAlert:55,upperAlert:62},
       {ticker:'FPT',name:'FPT Corp',lowerAlert:120,upperAlert:135},
-      {ticker:'VRE',name:'Vincom Retail',lowerAlert:20,upperAlert:24}
+      {ticker:'VRE',name:'Vincom Retail',lowerAlert:20,upperAlert:24},
+      {ticker:'ACB',name:'ACB Bank',lowerAlert:22,upperAlert:28},
+      {ticker:'MBB',name:'MB Bank',lowerAlert:20,upperAlert:26},
+      {ticker:'SHB',name:'SHB Bank',lowerAlert:10,upperAlert:14},
+      {ticker:'VPB',name:'VPBank',lowerAlert:18,upperAlert:24},
+      {ticker:'VIX',name:'VIX Securities',lowerAlert:13,upperAlert:18},
+      {ticker:'HCM',name:'HCMC Securities',lowerAlert:18,upperAlert:25},
+      {ticker:'SSI',name:'SSI Securities',lowerAlert:22,upperAlert:30}
     ]},
     crypto: { enabled:true, items:[
       {id:'bitcoin',symbol:'BTC',lowerAlert:60000,upperAlert:75000},
-      {id:'ethereum',symbol:'ETH',lowerAlert:3000,upperAlert:4000}
+      {id:'ethereum',symbol:'ETH',lowerAlert:3000,upperAlert:4000},
+      {id:'cardano',symbol:'ADA',lowerAlert:0.35,upperAlert:0.65}
     ]},
     marketLinks: { enabled:true, links:[
       {label:'SSI iBoard',url:'https://iboard.ssi.com.vn/',color:'#7c3aed'},
@@ -798,11 +903,22 @@ function renderCryptoTable(items, data) {
       if (price < item.lowerAlert) { statusLabel = 'Cảnh báo: Thấp'; badgeClass = 'badge-low'; showToast('⚠️', `${item.symbol} xuống dưới $${item.lowerAlert.toLocaleString()}`, 'warn'); }
       else if (price > item.upperAlert) { statusLabel = 'Cảnh báo: Cao'; badgeClass = 'badge-high'; showToast('🚀', `${item.symbol} vượt $${item.upperAlert.toLocaleString()}`, 'info'); }
     }
+    // Gợi ý LONG: giá trong vùng thấp + 24h thay đổi dương
+    let longSignal = '';
+    if (price !== null) {
+      const mid = (item.lowerAlert + item.upperAlert) / 2;
+      if (price <= mid && (change||0) > 0.5) {
+        longSignal = '<br><span style="font-size:10px;color:#16a34a;font-weight:700">🟢 LONG zone</span>';
+      } else if (price <= item.lowerAlert * 1.08 && (change||0) > 0) {
+        longSignal = '<br><span style="font-size:10px;color:#2563eb;font-weight:700">📍 Vùng vào lệnh</span>';
+      }
+    }
     const priceClass = (change || 0) > 0 ? 'price-up' : (change || 0) < 0 ? 'price-down' : 'price-normal';
     const changeStr = change !== null ? (change > 0 ? `<span class="change-up">▲${change.toFixed(2)}%</span>` : `<span class="change-down">▼${Math.abs(change).toFixed(2)}%</span>`) : '';
+    const priceDisplay = price !== null ? (price < 1 ? price.toFixed(4) : price.toLocaleString('en-US',{maximumFractionDigits:2})) : '—';
     return `<tr>
       <td><span class="ticker">${item.symbol}</span></td>
-      <td><span class="${priceClass}">$${price !== null ? price.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</span> ${changeStr}</td>
+      <td><span class="${priceClass}">$${priceDisplay}</span> ${changeStr}${longSignal}</td>
       <td>$${item.lowerAlert.toLocaleString()}</td>
       <td>$${item.upperAlert.toLocaleString()}</td>
       <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
@@ -1060,7 +1176,8 @@ async function loadNews() {
           <div class="news-item">
             <div style="flex:1">
               <div class="news-source">${escapeHtml(a.source)}</div>
-              <div class="news-title"><a href="${a.link}" target="_blank">${escapeHtml(a.title)}</a></div>
+              <div class="news-title"><a href="${a.link}" target="_blank" style="color:var(--text);text-decoration:none;font-weight:600;font-size:13px">${escapeHtml(a.title)}</a></div>
+              ${a.snippet ? `<div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4">${escapeHtml(a.snippet)}</div>` : ''}
             </div>
           </div>`).join('');
       }
@@ -1113,9 +1230,154 @@ function searchTopic(topic) {
   window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(topic + ' giáo dục'), '_blank');
 }
 
+// ─── Search ───────────────────────────────────────────────
+let _lastSearchEngine = 'google';
+function doSearch() { searchWith(_lastSearchEngine); }
+function searchWith(engine) {
+  _lastSearchEngine = engine;
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) { document.getElementById('search-input').focus(); return; }
+  const urls = {
+    google: `https://www.google.com/search?q=${encodeURIComponent(q)}`,
+    youtube: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+    vnexpress: `https://vnexpress.net/search?q=${encodeURIComponent(q)}`,
+    cafef: `https://cafef.vn/tim-kiem/${encodeURIComponent(q)}.chn`
+  };
+  window.open(urls[engine] || urls.google, '_blank');
+}
+function quickSearch(kw) {
+  document.getElementById('search-input').value = kw;
+  searchWith('google');
+}
+
+// ─── Todo / Việc cần làm ──────────────────────────────────
+let todos = JSON.parse(localStorage.getItem('todos_v2') || '[]');
+
+function saveTodosStorage() {
+  localStorage.setItem('todos_v2', JSON.stringify(todos));
+}
+
+function renderTodos() {
+  const user = document.getElementById('todo-user').value;
+  const list = document.getElementById('todo-list');
+  if (!list) return;
+
+  const filtered = todos.filter(t => user === 'all' || t.user === user || t.user === 'Cả hai');
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const sorted = [...filtered].sort((a,b) => {
+    const pOrder = {high:0,medium:1,low:2};
+    if (pOrder[a.priority] !== pOrder[b.priority]) return pOrder[a.priority] - pOrder[b.priority];
+    return (a.due||'9999') < (b.due||'9999') ? -1 : 1;
+  });
+
+  if (sorted.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text3)">
+      Chưa có việc cần làm nào.<br><small>Nhấn "+ Thêm" để thêm mới</small></div>`;
+    return;
+  }
+
+  const pColor = {high:'#ef4444',medium:'#f59e0b',low:'#22c55e'};
+  const pLabel = {high:'Khẩn',medium:'Bình thường',low:'Thấp'};
+
+  list.innerHTML = sorted.map(t => {
+    const dueDate = t.due ? new Date(t.due) : null;
+    const isOverdue = dueDate && dueDate < today && !t.done;
+    const dueStr = t.due ? new Date(t.due).toLocaleDateString('vi-VN') : '—';
+    const dueColor = isOverdue ? 'color:#ef4444;font-weight:600' : 'color:var(--text2)';
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')"
+        style="margin-top:3px;cursor:pointer;width:16px;height:16px;accent-color:var(--primary)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text3)':'color:var(--text)'}">${escapeHtml(t.title)}</div>
+        <div style="font-size:11px;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap">
+          <span style="color:${pColor[t.priority]};font-weight:600">${pLabel[t.priority]}</span>
+          <span style="color:var(--text3)">👤 ${t.user}</span>
+          <span style="${dueColor}">${isOverdue?'⚠️ Quá hạn: ':'📅 '}${dueStr}</span>
+        </div>
+      </div>
+      <button onclick="editTodo('${t.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px">✎</button>
+      <button onclick="deleteTodo('${t.id}')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:14px;padding:2px">×</button>
+    </div>`;
+  }).join('');
+
+  const overdue = sorted.filter(t=>!t.done&&t.due&&new Date(t.due)<today).length;
+  document.getElementById('todo-subtitle').textContent = overdue > 0
+    ? `⚠️ ${overdue} việc quá hạn` : `${sorted.filter(t=>!t.done).length} chưa xong · ${sorted.filter(t=>t.done).length} đã xong`;
+}
+
+function openAddTodo() {
+  document.getElementById('todo-modal-title').textContent = '✅ Thêm việc cần làm';
+  document.getElementById('todo-edit-id').value = '';
+  document.getElementById('todo-title-input').value = '';
+  document.getElementById('todo-due-input').value = '';
+  document.getElementById('todo-priority-input').value = 'medium';
+  document.getElementById('todo-user-input').value = 'Thầy Tạo';
+  document.getElementById('todo-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('todo-title-input').focus(),100);
+}
+
+function editTodo(id) {
+  const t = todos.find(x=>x.id===id);
+  if (!t) return;
+  document.getElementById('todo-modal-title').textContent = '✏️ Sửa việc cần làm';
+  document.getElementById('todo-edit-id').value = id;
+  document.getElementById('todo-title-input').value = t.title;
+  document.getElementById('todo-due-input').value = t.due || '';
+  document.getElementById('todo-priority-input').value = t.priority;
+  document.getElementById('todo-user-input').value = t.user;
+  document.getElementById('todo-modal').style.display = 'flex';
+}
+
+function saveTodo() {
+  const title = document.getElementById('todo-title-input').value.trim();
+  if (!title) { alert('Vui lòng nhập tên công việc'); return; }
+  const id = document.getElementById('todo-edit-id').value;
+  const data = {
+    id: id || Date.now().toString(),
+    title,
+    user: document.getElementById('todo-user-input').value,
+    priority: document.getElementById('todo-priority-input').value,
+    due: document.getElementById('todo-due-input').value,
+    done: false
+  };
+  if (id) {
+    const idx = todos.findIndex(x=>x.id===id);
+    if (idx>-1) { data.done = todos[idx].done; todos[idx] = data; }
+  } else {
+    todos.unshift(data);
+  }
+  saveTodosStorage();
+  renderTodos();
+  closeModal('todo-modal');
+  showToast('✅', id ? 'Đã cập nhật' : 'Đã thêm việc mới', 'info');
+}
+
+function toggleTodo(id) {
+  const t = todos.find(x=>x.id===id);
+  if (t) { t.done = !t.done; saveTodosStorage(); renderTodos(); }
+}
+
+function deleteTodo(id) {
+  todos = todos.filter(x=>x.id!==id);
+  saveTodosStorage();
+  renderTodos();
+}
+
 // ─── Init ─────────────────────────────────────────────────
-loadConfig().then(() => startAutoRefresh());
+loadConfig().then(() => { startAutoRefresh(); renderTodos(); });
 </script>
+
+<!-- ─── FOOTER ───────────────────────────────────────────── -->
+<footer style="background:var(--card);border-top:1px solid var(--border);padding:12px 24px;margin-top:8px;text-align:center;font-size:12px;color:var(--text3)">
+  <span>© 2026 Claude &amp; Thầy Lê Thành Tạo</span>
+  <span style="margin:0 12px">·</span>
+  <span>📱 <a href="tel:0903662768" style="color:var(--text3);text-decoration:none">0903662768</a></span>
+  <span style="margin:0 12px">·</span>
+  <span>✉️ <a href="mailto:hcmtranle@gmail.com" style="color:var(--text3);text-decoration:none">hcmtranle@gmail.com</a></span>
+  <span style="margin:0 12px">·</span>
+  <span>🤖 Powered by <a href="https://claude.ai" target="_blank" style="color:var(--primary)">Claude AI</a></span>
+</footer>
 
 </body>
 </html>
