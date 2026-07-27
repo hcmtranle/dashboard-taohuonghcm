@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Lê Thành Tạo</title>
+  <style>
+    /* ─── Reset & Base ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:         #f0f2f5;
+      --card:       #ffffff;
+      --border:     #e2e8f0;
+      --text:       #1a202c;
+      --text2:      #64748b;
+      --text3:      #94a3b8;
+      --primary:    #3b82f6;
+      --success:    #22c55e;
+      --warning:    #f59e0b;
+      --danger:     #ef4444;
+      --purple:     #7c3aed;
+      --radius:     12px;
+      --shadow:     0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+      --shadow-hover: 0 4px 12px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.06);
+    }
+    [data-theme="dark"] {
+      --bg:    #0f172a;
+      --card:  #1e293b;
+      --border:#334155;
+      --text:  #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #64748b;
+    }
+    html, body { height: 100%; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+
+    /* ─── Layout ────────────────────────────────────────── */
+    .header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-logo { width: 36px; height: 36px; background: linear-gradient(135deg, #3b82f6, #7c3aed); border-radius: 8px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:16px; }
+    .header-title h1 { font-size: 16px; font-weight: 700; color: var(--text); }
+    .header-title p  { font-size: 12px; color: var(--text2); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    #live-clock { font-size: 20px; font-weight: 700; color: var(--primary); font-variant-numeric: tabular-nums; }
+    #live-date  { font-size: 12px; color: var(--text2); text-align: right; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text2); cursor:pointer; font-size:12px; font-weight:500; transition:all .15s; }
+    .btn:hover { background:var(--bg); color:var(--text); border-color:var(--text3); }
+    .btn-primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .btn-primary:hover { background:#2563eb; color:#fff; }
+
+    .main { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+
+    /* ─── Grid ──────────────────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } .grid-4 { grid-template-columns: repeat(2,1fr); } .grid-3 { grid-template-columns: 1fr; } }
+    @media (max-width: 600px)  { .grid-4 { grid-template-columns: 1fr; } }
+
+    /* ─── Card ──────────────────────────────────────────── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .card-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .card-header h2 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card-header .subtitle { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .card-body { padding: 14px 16px; }
+    .card-icon { width: 28px; height: 28px; border-radius: 6px; display:flex;align-items:center;justify-content:center; font-size: 14px; }
+
+    /* ─── Status Badge ──────────────────────────────────── */
+    .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .badge-normal  { background: #dcfce7; color: #16a34a; }
+    .badge-low     { background: #fee2e2; color: #dc2626; }
+    .badge-high    { background: #fff7ed; color: #ea580c; }
+    .badge-loading { background: #f1f5f9; color: #64748b; }
+    [data-theme="dark"] .badge-normal { background: #14532d; color: #86efac; }
+    [data-theme="dark"] .badge-low    { background: #450a0a; color: #fca5a5; }
+    [data-theme="dark"] .badge-high   { background: #431407; color: #fdba74; }
+
+    /* ─── Table ─────────────────────────────────────────── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--bg); }
+    .ticker { font-weight: 700; color: var(--primary); font-size: 13px; }
+    .price-up   { color: #16a34a; font-weight: 700; }
+    .price-down { color: #dc2626; font-weight: 700; }
+    .price-normal { color: var(--text); font-weight: 600; }
+
+    /* ─── Market Links ──────────────────────────────────── */
+    .market-link-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--card); text-decoration: none; color: var(--text);
+      font-weight: 600; font-size: 13px; transition: all .15s; cursor: pointer;
+    }
+    .market-link-btn:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+    .market-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ─── Content Trends & Quick Links ─────────────────── */
+    .quick-link-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .quick-link {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 8px; border: 1px solid var(--border); background: var(--bg);
+      text-decoration: none; color: var(--text); font-size: 13px; font-weight: 500;
+      transition: all .15s;
+    }
+    .quick-link:hover { background: var(--card); box-shadow: var(--shadow-hover); border-color: var(--primary); color: var(--primary); }
+    .quick-link-icon { font-size: 18px; }
+
+    /* ─── Gmail Widget ──────────────────────────────────── */
+    .gmail-links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .gmail-action {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; padding: 14px 8px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg); text-decoration: none; color: var(--text); font-size: 12px;
+      font-weight: 500; transition: all .15s; text-align: center; cursor: pointer;
+    }
+    .gmail-action:hover { background: var(--card); box-shadow: var(--shadow-hover); border-color: var(--primary); }
+    .gmail-action-icon { font-size: 24px; }
+    .gmail-stat { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .gmail-stat:last-child { border-bottom: none; }
+
+    /* ─── Calendar Embed ────────────────────────────────── */
+    .calendar-embed { width: 100%; height: 300px; border: none; border-radius: 8px; }
+
+    /* ─── Scheduled Tasks ───────────────────────────────── */
+    .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .task-item:last-child { border-bottom: none; }
+    .task-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--border); flex-shrink: 0; margin-top: 1px; }
+    .task-content { flex: 1; }
+    .task-title { font-size: 13px; font-weight: 500; }
+    .task-due   { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+    /* ─── Alert Banner ──────────────────────────────────── */
+    .alert-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; font-weight: 500; }
+    .alert-bar-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .alert-bar-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    [data-theme="dark"] .alert-bar-warn { background: #451a03; border-color: #92400e; color: #fde68a; }
+    [data-theme="dark"] .alert-bar-info { background: #172554; border-color: #1e40af; color: #bfdbfe; }
+
+    /* ─── Refresh indicator ─────────────────────────────── */
+    .refresh-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display:inline-block; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+    /* ─── Loading skeleton ──────────────────────────────── */
+    .skeleton { background: linear-gradient(90deg, var(--border) 25%, var(--bg) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; height: 14px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ─── Change indicator ──────────────────────────────── */
+    .change-up   { color: #16a34a; font-size: 11px; }
+    .change-down { color: #dc2626; font-size: 11px; }
+
+    /* ─── Section label ─────────────────────────────────── */
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 10px; }
+
+    /* ─── Notification Toast ────────────────────────────── */
+    #toast-container { position: fixed; top: 72px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+    .toast { padding: 12px 16px; border-radius: 10px; background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow-hover); display:flex; align-items:center; gap:10px; font-size:13px; max-width: 320px; animation: slideIn .3s ease; }
+    @keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+    .toast-icon { font-size: 18px; }
+    .toast-warn { border-left: 3px solid var(--danger); }
+    .toast-info { border-left: 3px solid var(--primary); }
+
+    /* ─── Responsive ────────────────────────────────────── */
+    .span-2 { grid-column: span 2; }
+    @media(max-width:900px){ .span-2 { grid-column: span 1; } }
+
+    /* ─── Divider ───────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ─── HEADER ─────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">LT</div>
+    <div class="header-title">
+      <h1 id="dash-title">Dashboard Công Việc</h1>
+      <p id="dash-subtitle">Trường Tiểu học Nguyễn An Khương</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div style="text-align:right">
+      <div id="live-clock">--:--:--</div>
+      <div id="live-date" class="text-sm"></div>
+    </div>
+    <button class="btn" onclick="refreshAll()" title="Làm mới dữ liệu">
+      🔄 Làm mới
+    </button>
+    <button class="btn" onclick="toggleTheme()" title="Đổi giao diện">
+      🌙
+    </button>
+  </div>
+</header>
+
+<!-- ─── TOAST NOTIFICATIONS ────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ─── MAIN CONTENT ───────────────────────────────────── -->
+<main class="main" id="main-content">
+
+  <!-- Row 1: Stocks + Crypto -->
+  <div class="grid-2" style="margin-bottom:16px">
+
+    <!-- STOCKS -->
+    <div class="card" id="widget-stocks">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#eff6ff">📈</span> <span id="stock-title">Cảnh báo chứng khoán</span></h2>
+          <div class="subtitle" id="stock-subtitle">Kết nối App Script đang kiểm tra...</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn" onclick="loadStocks()" style="font-size:11px;padding:4px 10px">↻ Cập nhật</button>
+          <a id="stock-add-btn" href="#" onclick="openAddStock()" class="btn btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none">+ Thêm mã</a>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="data-table" id="stock-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Giá HT</th>
+              <th>Ngưỡng dưới</th>
+              <th>Ngưỡng trên</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="stock-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text2)">Đang tải dữ liệu...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body" style="padding:8px 16px;border-top:1px solid var(--border)">
+        <small style="color:var(--text3)">Nguồn: TCBS qua App Script. <a href="#" onclick="openSettings()" style="color:var(--primary)">Cấu hình URL →</a></small>
+      </div>
+    </div>
+
+    <!-- CRYPTO -->
+    <div class="card" id="widget-crypto">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#fef3c7">🌐</span> <span id="crypto-title">Cảnh báo Coin</span></h2>
+          <div class="subtitle">Nguồn giá: <strong>CoinGecko Live API</strong> (Tự động cập nhật) <span class="refresh-dot" style="margin-left:4px"></span></div>
+        </div>
+        <button class="btn" onclick="loadCrypto()" style="font-size:11px;padding:4px 10px">↻ Tải lại</button>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="data-table" id="crypto-table">
+          <thead>
+            <tr>
+              <th>Coin</th>
+              <th>Giá (USD)</th>
+              <th>Ngưỡng dưới</th>
+              <th>Ngưỡng trên</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="crypto-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text2)">Đang tải dữ liệu...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body" style="padding:8px 16px;border-top:1px solid var(--border)">
+        <small style="color:var(--text3)">Giá tự động cập nhật trực tiếp. Khi giá vượt ngưỡng, hệ thống sẽ hiện cảnh báo và gửi thông báo.</small>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Row 2: Gmail + Calendar + Scheduled Tasks -->
+  <div class="grid-3" style="margin-bottom:16px">
+
+    <!-- GMAIL -->
+    <div class="card" id="widget-gmail">
+      <div class="card-header">
+        <h2><span class="card-icon" style="background:#fef2f2">✉️</span> Gmail</h2>
+        <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="btn btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none">Mở Gmail →</a>
+      </div>
+      <div class="card-body">
+        <div class="alert-bar alert-bar-info" style="margin-bottom:12px">
+          ℹ️ Nhấn các nút bên dưới để mở Gmail trực tiếp
+        </div>
+        <div class="gmail-links">
+          <a href="https://mail.google.com/mail/u/0/#inbox" target="_blank" class="gmail-action">
+            <span class="gmail-action-icon">📥</span>
+            <span>Hộp thư đến</span>
+          </a>
+          <a href="https://mail.google.com/mail/u/0/#starred" target="_blank" class="gmail-action">
+            <span class="gmail-action-icon">⭐</span>
+            <span>Được gắn sao</span>
+          </a>
+          <a href="https://mail.google.com/mail/u/0/#sent" target="_blank" class="gmail-action">
+            <span class="gmail-action-icon">📤</span>
+            <span>Đã gửi</span>
+          </a>
+          <a href="https://mail.google.com/mail/u/0/#compose" target="_blank" class="gmail-action">
+            <span class="gmail-action-icon">✏️</span>
+            <span>Soạn email</span>
+          </a>
+          <a href="https://mail.google.com/mail/u/0/#search/is:unread" target="_blank" class="gmail-action">
+            <span class="gmail-action-icon">🔴</span>
+            <span>Chưa đọc</span>
+          </a>
+          <a href="https://mail.google.com/mail/u/0/#label/important" target="_blank" class="gmail-action">
+            <span class="gmail-action-icon">❗</span>
+            <span>Quan trọng</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="card" id="widget-calendar">
+      <div class="card-header">
+        <h2><span class="card-icon" style="background:#f0fdf4">📅</span> Lịch công tác</h2>
+        <a href="https://calendar.google.com/calendar/r" target="_blank" class="btn btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none">Mở đầy đủ →</a>
+      </div>
+      <div class="card-body" style="padding:8px">
+        <iframe
+          class="calendar-embed"
+          id="calendar-embed"
+          src="https://calendar.google.com/calendar/embed?src=hcmtranle%40gmail.com&ctz=Asia%2FHo_Chi_Minh&mode=WEEK&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&bgcolor=%23ffffff&color=%233F51B5"
+          frameborder="0"
+          scrolling="no">
+        </iframe>
+      </div>
+    </div>
+
+    <!-- SCHEDULED TASKS -->
+    <div class="card" id="widget-tasks">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#fdf4ff">📋</span> Nhắc nhở & Nhiệm vụ</h2>
+          <div class="subtitle">Đồng bộ từ Google Sheets</div>
+        </div>
+        <button class="btn" onclick="loadTasks()" style="font-size:11px;padding:4px 10px">↻</button>
+      </div>
+      <div class="card-body">
+        <div id="tasks-list">
+          <div class="alert-bar alert-bar-warn">
+            ⚙️ Cấu hình App Script URL để xem nhắc nhở từ Sheets
+          </div>
+          <!-- Demo tasks -->
+          <div class="task-item">
+            <div class="task-check" style="background:var(--success);border-color:var(--success);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">✓</div>
+            <div class="task-content">
+              <div class="task-title">Họp tổ chuyên môn</div>
+              <div class="task-due">✅ Hôm nay 07:30</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-check"></div>
+            <div class="task-content">
+              <div class="task-title">Nộp kế hoạch bài dạy tuần 3</div>
+              <div class="task-due">📅 Thứ 4, 29/07/2026</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-check"></div>
+            <div class="task-content">
+              <div class="task-title">Kiểm tra nội bộ - GV Nguyễn Thị B</div>
+              <div class="task-due">📅 Thứ 6, 31/07/2026</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div class="task-check"></div>
+            <div class="task-content">
+              <div class="task-title">Đăng video YouTube kênh giáo dục</div>
+              <div class="task-due">⚠️ Thứ 7, 01/08/2026</div>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <a href="https://docs.google.com/spreadsheets" target="_blank" class="btn" style="width:100%;justify-content:center;font-size:12px;text-decoration:none">
+          📊 Mở Google Sheets
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Row 3: Market Links -->
+  <div class="card" id="widget-market" style="margin-bottom:16px">
+    <div class="card-header">
+      <div>
+        <h2><span class="card-icon" style="background:#f0fdf4">💹</span> Phân tích thị trường chuyên sâu</h2>
+        <div class="subtitle">Mở nhanh các cổng phân tích khối ngoại mua/bán ròng, dòng tiền ngành, giao dịch thỏa thuận</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="grid-4" style="margin-bottom:0" id="market-links-grid">
+        <!-- Filled by JS from config -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Content Trends + Quick Actions -->
+  <div class="grid-2" style="margin-bottom:16px">
+
+    <!-- CONTENT TRENDS -->
+    <div class="card" id="widget-trends">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#fff7ed">🔥</span> Xu hướng nội dung</h2>
+          <div class="subtitle">Công cụ theo dõi xu hướng để viết bài báo & tạo video</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="quick-link-grid" id="trends-grid">
+          <!-- Filled by JS -->
+        </div>
+        <div class="divider"></div>
+        <div class="section-label">Xu hướng Google hôm nay (VN)</div>
+        <div style="border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+          <iframe
+            src="https://trends.google.com/trends/trendingsearches/daily/rss?geo=VN"
+            style="width:100%;height:160px;border:none;background:var(--bg)"
+            id="trends-iframe"
+          ></iframe>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:6px">* Nhấn "Google Trends VN" bên dưới để xem chi tiết và lọc theo chủ đề</p>
+      </div>
+    </div>
+
+    <!-- STATS & OVERVIEW -->
+    <div class="card" id="widget-overview">
+      <div class="card-header">
+        <div>
+          <h2><span class="card-icon" style="background:#f0fdf4">📊</span> Tổng quan & Kết nối</h2>
+          <div class="subtitle">Trạng thái các dịch vụ đang kết nối</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div class="section-label">Trạng thái kết nối</div>
+        <div id="connection-status">
+          <div class="task-item">
+            <div id="status-coingecko" style="font-size:16px">⏳</div>
+            <div class="task-content">
+              <div class="task-title">CoinGecko API</div>
+              <div class="task-due" id="status-coingecko-msg">Đang kiểm tra...</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div id="status-appscript" style="font-size:16px">⚙️</div>
+            <div class="task-content">
+              <div class="task-title">App Script (Chứng khoán)</div>
+              <div class="task-due" id="status-appscript-msg">Chưa cấu hình URL</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div style="font-size:16px">📅</div>
+            <div class="task-content">
+              <div class="task-title">Google Calendar</div>
+              <div class="task-due">Nhúng iframe — luôn hiển thị</div>
+            </div>
+          </div>
+          <div class="task-item">
+            <div style="font-size:16px">✉️</div>
+            <div class="task-content">
+              <div class="task-title">Gmail</div>
+              <div class="task-due">Liên kết trực tiếp tới hcmtranle@gmail.com</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Cấu hình nhanh</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn" onclick="openSettings()" style="justify-content:flex-start">
+            ⚙️ Cấu hình App Script URL (giá chứng khoán)
+          </button>
+          <button class="btn" onclick="openStockManager()" style="justify-content:flex-start">
+            📈 Quản lý danh mục theo dõi
+          </button>
+          <button class="btn" onclick="exportData()" style="justify-content:flex-start">
+            💾 Xuất dữ liệu ra Google Sheets
+          </button>
+          <a href="https://script.google.com/home" target="_blank" class="btn" style="justify-content:flex-start;text-decoration:none">
+            🔧 Mở Google Apps Script
+          </a>
+        </div>
+
+        <div class="divider"></div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px;font-size:12px;color:var(--text2)">
+          <strong style="color:var(--text)">💡 Thêm ý tưởng mới:</strong><br>
+          Nói với Claude trong Cowork để tự động cập nhật dashboard.<br>
+          Ví dụ: "Thêm widget theo dõi số học sinh", "Thêm link Zalo OA vào nhanh"...
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- ─── SETTINGS MODAL ──────────────────────────────────── -->
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center" onclick="closeSettings(event)">
+  <div class="card" style="width:480px;max-width:95vw" onclick="e=>e.stopPropagation()">
+    <div class="card-header">
+      <h2>⚙️ Cấu hình Dashboard</h2>
+      <button class="btn" onclick="closeModal('settings-modal')">✕</button>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2)">URL App Script (Giá chứng khoán)</label>
+        <input id="input-stock-url" type="text" placeholder="https://script.google.com/macros/s/..."
+          style="width:100%;margin-top:4px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+        <p style="font-size:11px;color:var(--text3);margin-top:4px">Xem README.md để biết cách deploy App Script</p>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2)">URL Google Sheets (Nhắc nhở)</label>
+        <input id="input-sheets-url" type="text" placeholder="https://docs.google.com/spreadsheets/d/..."
+          style="width:100%;margin-top:4px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()" style="width:100%;justify-content:center">
+        💾 Lưu cấu hình
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── JAVASCRIPT ──────────────────────────────────────── -->
+<script>
+// ─── Config & State ───────────────────────────────────────
+let CONFIG = null;
+let priceAlerts = [];
+
+// Load config.json
+async function loadConfig() {
+  try {
+    const r = await fetch('./dashboard.config.json?' + Date.now());
+    CONFIG = await r.json();
+    applyConfig();
+  } catch(e) {
+    CONFIG = getDefaultConfig();
+    applyConfig();
+    showToast('⚠️', 'Dùng cấu hình mặc định. Kiểm tra dashboard.config.json', 'warn');
+  }
+}
+
+function getDefaultConfig() {
+  return {
+    meta: { title:'Dashboard Công Việc', subtitle:'Trường Tiểu học Nguyễn An Khương', ownerEmail:'hcmtranle@gmail.com', autoRefreshSeconds:60 },
+    appScript: { stockApiUrl:'', sheetsApiUrl:'' },
+    stocks: { enabled:true, items:[
+      {ticker:'VNM',name:'Vinamilk',lowerAlert:65,upperAlert:72},
+      {ticker:'VCB',name:'Vietcombank',lowerAlert:55,upperAlert:62},
+      {ticker:'FPT',name:'FPT Corp',lowerAlert:120,upperAlert:135},
+      {ticker:'VRE',name:'Vincom Retail',lowerAlert:20,upperAlert:24}
+    ]},
+    crypto: { enabled:true, items:[
+      {id:'bitcoin',symbol:'BTC',lowerAlert:60000,upperAlert:75000},
+      {id:'ethereum',symbol:'ETH',lowerAlert:3000,upperAlert:4000}
+    ]},
+    marketLinks: { enabled:true, links:[
+      {label:'SSI iBoard',url:'https://iboard.ssi.com.vn/',color:'#7c3aed'},
+      {label:'TCBS TCInvest',url:'https://tcinvest.tcbs.com.vn/',color:'#2563eb'},
+      {label:'Vietstock - Khối ngoại',url:'https://vietstock.vn/',color:'#16a34a'},
+      {label:'CafeF - Dữ liệu',url:'https://cafef.vn/du-lieu.chn',color:'#ea580c'}
+    ]},
+    contentTrends: { enabled:true, links:[
+      {label:'Google Trends VN',url:'https://trends.google.com/trends/?geo=VN',icon:'📈'},
+      {label:'YouTube Studio',url:'https://studio.youtube.com/',icon:'🎬'},
+      {label:'Search Console',url:'https://search.google.com/search-console',icon:'🔍'},
+      {label:'Keyword Planner',url:'https://ads.google.com/aw/keywordplanner',icon:'🔑'}
+    ]},
+    scheduledTasks: { enabled:true, sheetsUrl:'' }
+  };
+}
+
+function applyConfig() {
+  if (!CONFIG) return;
+  document.title = CONFIG.meta.title;
+  document.getElementById('dash-title').textContent = CONFIG.meta.title;
+  document.getElementById('dash-subtitle').textContent = CONFIG.meta.subtitle;
+
+  // Calendar with email
+  const calUrl = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(CONFIG.meta.ownerEmail)}&ctz=Asia%2FHo_Chi_Minh&mode=WEEK&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0`;
+  document.getElementById('calendar-embed').src = calUrl;
+
+  // Restore saved settings from localStorage
+  const savedStockUrl = localStorage.getItem('stock_api_url');
+  if (savedStockUrl) CONFIG.appScript.stockApiUrl = savedStockUrl;
+  const savedSheetsUrl = localStorage.getItem('sheets_api_url');
+  if (savedSheetsUrl) CONFIG.appScript.sheetsApiUrl = savedSheetsUrl;
+
+  renderMarketLinks();
+  renderTrendLinks();
+  loadStocks();
+  loadCrypto();
+  loadTasks();
+  updateConnectionStatus();
+}
+
+// ─── Clock ────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const days = ['Chủ Nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+  const months = now.getMonth() + 1;
+  document.getElementById('live-clock').textContent =
+    now.toLocaleTimeString('vi-VN', {hour12: false});
+  document.getElementById('live-date').innerHTML =
+    `${days[now.getDay()]}, ${now.getDate().toString().padStart(2,'0')}/${months.toString().padStart(2,'0')}/${now.getFullYear()}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Stocks ───────────────────────────────────────────────
+async function loadStocks() {
+  const tbody = document.getElementById('stock-tbody');
+  if (!CONFIG) return;
+
+  const stockUrl = CONFIG.appScript?.stockApiUrl;
+  const isConfigured = stockUrl && !stockUrl.includes('PASTE_YOUR');
+  const items = CONFIG.stocks?.items || [];
+
+  document.getElementById('stock-subtitle').innerHTML = isConfigured
+    ? 'Nguồn: TCBS qua App Script <span class="refresh-dot" style="margin-left:4px"></span>'
+    : 'Hiển thị giá mẫu — <a href="#" onclick="openSettings()" style="color:var(--primary)">Cấu hình App Script →</a>';
+
+  // Show skeleton
+  tbody.innerHTML = items.map(() => `<tr>${Array(6).fill('<td><div class="skeleton"></div></td>').join('')}</tr>`).join('');
+
+  if (isConfigured) {
+    try {
+      const r = await fetch(stockUrl + '?action=prices&tickers=' + items.map(s=>s.ticker).join(','));
+      const data = await r.json();
+      renderStockTable(items, data);
+      document.getElementById('status-appscript').textContent = '✅';
+      document.getElementById('status-appscript-msg').textContent = 'Kết nối thành công';
+      return;
+    } catch(e) {
+      document.getElementById('status-appscript').textContent = '❌';
+      document.getElementById('status-appscript-msg').textContent = 'Lỗi: ' + e.message;
+    }
+  } else {
+    document.getElementById('status-appscript').textContent = '⚙️';
+    document.getElementById('status-appscript-msg').textContent = 'Chưa cấu hình URL';
+  }
+
+  // Demo data (when not configured)
+  const demoData = {
+    'VNM': { price: 68.5, change: 0.5 },
+    'VCB': { price: 57.0, change: -0.2 },
+    'FPT': { price: 128.0, change: 1.2 },
+    'VRE': { price: 21.5, change: 0.0 }
+  };
+  renderStockTable(items, demoData);
+}
+
+function renderStockTable(items, data) {
+  const tbody = document.getElementById('stock-tbody');
+  priceAlerts = [];
+  tbody.innerHTML = items.map(item => {
+    const d = data[item.ticker];
+    const price = d ? d.price : null;
+    const change = d ? d.change : null;
+    let status = 'normal', statusLabel = 'Bình thường', badgeClass = 'badge-normal';
+    if (price !== null) {
+      if (price < item.lowerAlert) { status = 'low'; statusLabel = 'Cảnh báo: Thấp'; badgeClass = 'badge-low'; priceAlerts.push({ticker:item.ticker,msg:`${item.ticker} dưới ngưỡng (${price.toFixed(1)})`}); }
+      else if (price > item.upperAlert) { status = 'high'; statusLabel = 'Cảnh báo: Cao'; badgeClass = 'badge-high'; priceAlerts.push({ticker:item.ticker,msg:`${item.ticker} vượt ngưỡng (${price.toFixed(1)})`}); }
+    }
+    const priceClass = change > 0 ? 'price-up' : change < 0 ? 'price-down' : 'price-normal';
+    const changeStr = change !== null ? (change > 0 ? `<span class="change-up">▲${change.toFixed(1)}</span>` : change < 0 ? `<span class="change-down">▼${Math.abs(change).toFixed(1)}</span>` : '—') : '—';
+    return `<tr>
+      <td><span class="ticker">${item.ticker}</span><br><small style="color:var(--text2);font-size:10px">${item.name}</small></td>
+      <td><span class="${priceClass}">${price !== null ? price.toFixed(1) : '—'}</span> ${changeStr}</td>
+      <td>${item.lowerAlert}</td>
+      <td>${item.upperAlert}</td>
+      <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+      <td><a href="#" onclick="removeStock('${item.ticker}')" style="color:var(--danger);font-size:12px;text-decoration:none">Xoá</a></td>
+    </tr>`;
+  }).join('');
+
+  // Show alerts
+  priceAlerts.forEach(a => showToast('⚠️', a.msg, 'warn'));
+}
+
+// ─── Crypto ───────────────────────────────────────────────
+async function loadCrypto() {
+  const tbody = document.getElementById('crypto-tbody');
+  if (!CONFIG) return;
+  const items = CONFIG.crypto?.items || [];
+
+  tbody.innerHTML = items.map(() => `<tr>${Array(6).fill('<td><div class="skeleton"></div></td>').join('')}</tr>`).join('');
+
+  try {
+    const ids = items.map(c => c.id).join(',');
+    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_last_updated_at=true`);
+    const data = await r.json();
+    renderCryptoTable(items, data);
+    document.getElementById('status-coingecko').textContent = '✅';
+    document.getElementById('status-coingecko-msg').textContent = 'Kết nối OK — ' + new Date().toLocaleTimeString('vi-VN');
+  } catch(e) {
+    document.getElementById('status-coingecko').textContent = '❌';
+    document.getElementById('status-coingecko-msg').textContent = 'Lỗi kết nối: ' + e.message;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--danger)">⚠️ Không lấy được giá coin. ${e.message}</td></tr>`;
+  }
+}
+
+function renderCryptoTable(items, data) {
+  const tbody = document.getElementById('crypto-tbody');
+  tbody.innerHTML = items.map(item => {
+    const d = data[item.id];
+    const price = d ? d.usd : null;
+    const change = d ? d.usd_24h_change : null;
+    let statusLabel = 'Bình thường', badgeClass = 'badge-normal';
+    if (price !== null) {
+      if (price < item.lowerAlert) { statusLabel = 'Cảnh báo: Thấp'; badgeClass = 'badge-low'; showToast('⚠️', `${item.symbol} xuống dưới $${item.lowerAlert.toLocaleString()}`, 'warn'); }
+      else if (price > item.upperAlert) { statusLabel = 'Cảnh báo: Cao'; badgeClass = 'badge-high'; showToast('🚀', `${item.symbol} vượt $${item.upperAlert.toLocaleString()}`, 'info'); }
+    }
+    const priceClass = (change || 0) > 0 ? 'price-up' : (change || 0) < 0 ? 'price-down' : 'price-normal';
+    const changeStr = change !== null ? (change > 0 ? `<span class="change-up">▲${change.toFixed(2)}%</span>` : `<span class="change-down">▼${Math.abs(change).toFixed(2)}%</span>`) : '';
+    return `<tr>
+      <td><span class="ticker">${item.symbol}</span></td>
+      <td><span class="${priceClass}">$${price !== null ? price.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</span> ${changeStr}</td>
+      <td>$${item.lowerAlert.toLocaleString()}</td>
+      <td>$${item.upperAlert.toLocaleString()}</td>
+      <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+      <td><a href="#" onclick="removeCrypto('${item.id}')" style="color:var(--danger);font-size:12px;text-decoration:none">Xoá</a></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Market Links ─────────────────────────────────────────
+function renderMarketLinks() {
+  if (!CONFIG?.marketLinks?.enabled) return;
+  const grid = document.getElementById('market-links-grid');
+  grid.innerHTML = (CONFIG.marketLinks.links || []).map(link => `
+    <a href="${link.url}" target="_blank" class="market-link-btn" style="text-decoration:none">
+      <span class="market-dot" style="background:${link.color}"></span>
+      ${link.label}
+    </a>`).join('');
+}
+
+// ─── Trend Links ──────────────────────────────────────────
+function renderTrendLinks() {
+  if (!CONFIG?.contentTrends?.enabled) return;
+  const grid = document.getElementById('trends-grid');
+  grid.innerHTML = (CONFIG.contentTrends.links || []).map(link => `
+    <a href="${link.url}" target="_blank" class="quick-link" style="text-decoration:none">
+      <span class="quick-link-icon">${link.icon}</span>
+      <span>${link.label}</span>
+    </a>`).join('');
+}
+
+// ─── Tasks from Sheets ────────────────────────────────────
+async function loadTasks() {
+  if (!CONFIG?.appScript?.sheetsApiUrl || CONFIG.appScript.sheetsApiUrl.includes('PASTE_YOUR')) return;
+  try {
+    const r = await fetch(CONFIG.appScript.sheetsApiUrl + '?action=tasks');
+    const data = await r.json();
+    if (data.tasks && data.tasks.length) {
+      const list = document.getElementById('tasks-list');
+      list.innerHTML = data.tasks.map(t => `
+        <div class="task-item">
+          <div class="task-check" style="${t.done ? 'background:var(--success);border-color:var(--success)' : ''}"></div>
+          <div class="task-content">
+            <div class="task-title" style="${t.done ? 'text-decoration:line-through;color:var(--text2)' : ''}">${t.title}</div>
+            <div class="task-due">${t.due}</div>
+          </div>
+        </div>`).join('');
+    }
+  } catch(e) { /* silent fail */ }
+}
+
+// ─── Refresh All ──────────────────────────────────────────
+function refreshAll() {
+  loadStocks();
+  loadCrypto();
+  loadTasks();
+  updateConnectionStatus();
+  showToast('🔄', 'Đang làm mới dữ liệu...', 'info');
+}
+
+function updateConnectionStatus() {
+  const isStockConfigured = CONFIG?.appScript?.stockApiUrl && !CONFIG.appScript.stockApiUrl.includes('PASTE_YOUR');
+  if (!isStockConfigured) {
+    document.getElementById('status-appscript').textContent = '⚙️';
+    document.getElementById('status-appscript-msg').textContent = 'Chưa cấu hình — nhấn "Cấu hình App Script URL"';
+  }
+}
+
+// ─── Auto Refresh ─────────────────────────────────────────
+let refreshTimer;
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  const secs = CONFIG?.meta?.autoRefreshSeconds || 60;
+  refreshTimer = setInterval(() => { loadCrypto(); loadStocks(); }, secs * 1000);
+}
+
+// ─── Theme ────────────────────────────────────────────────
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  document.querySelector('[onclick="toggleTheme()"]').textContent = isDark ? '🌙' : '☀️';
+}
+// Restore theme
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.querySelector('[onclick="toggleTheme()"]').textContent = '☀️';
+}
+
+// ─── Toast Notifications ──────────────────────────────────
+const shownToasts = new Set();
+function showToast(icon, msg, type='info') {
+  const key = icon + msg;
+  if (shownToasts.has(key)) return;
+  shownToasts.add(key);
+  setTimeout(() => shownToasts.delete(key), 30000);
+
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(), 300); }, 5000);
+}
+
+// ─── Settings Modal ───────────────────────────────────────
+function openSettings() {
+  const m = document.getElementById('settings-modal');
+  m.style.display = 'flex';
+  document.getElementById('input-stock-url').value = CONFIG?.appScript?.stockApiUrl || '';
+  document.getElementById('input-sheets-url').value = CONFIG?.appScript?.sheetsApiUrl || '';
+}
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function closeSettings(e) { if (e.target.id === 'settings-modal') closeModal('settings-modal'); }
+function saveSettings() {
+  const stockUrl = document.getElementById('input-stock-url').value.trim();
+  const sheetsUrl = document.getElementById('input-sheets-url').value.trim();
+  localStorage.setItem('stock_api_url', stockUrl);
+  localStorage.setItem('sheets_api_url', sheetsUrl);
+  if (CONFIG) { CONFIG.appScript.stockApiUrl = stockUrl; CONFIG.appScript.sheetsApiUrl = sheetsUrl; }
+  closeModal('settings-modal');
+  refreshAll();
+  showToast('✅', 'Đã lưu cấu hình!', 'info');
+}
+
+// ─── Stock / Crypto Management ────────────────────────────
+function removeStock(ticker) {
+  if (!CONFIG?.stocks?.items) return;
+  CONFIG.stocks.items = CONFIG.stocks.items.filter(s => s.ticker !== ticker);
+  renderStockTable(CONFIG.stocks.items, {});
+}
+function removeCrypto(id) {
+  if (!CONFIG?.crypto?.items) return;
+  CONFIG.crypto.items = CONFIG.crypto.items.filter(c => c.id !== id);
+  loadCrypto();
+}
+function openAddStock() {
+  const ticker = prompt('Nhập mã chứng khoán (vd: HPG, MSN):');
+  if (!ticker) return;
+  const lower = parseFloat(prompt('Ngưỡng cảnh báo dưới:') || '0');
+  const upper = parseFloat(prompt('Ngưỡng cảnh báo trên:') || '999');
+  CONFIG.stocks.items.push({ ticker: ticker.toUpperCase(), name: ticker.toUpperCase(), lowerAlert: lower, upperAlert: upper });
+  loadStocks();
+  showToast('✅', `Đã thêm mã ${ticker.toUpperCase()}`, 'info');
+}
+function openStockManager() { openAddStock(); }
+function exportData() {
+  showToast('📊', 'Tính năng xuất Sheets cần cấu hình App Script URL', 'info');
+  openSettings();
+}
+
+// ─── Init ─────────────────────────────────────────────────
+loadConfig().then(() => startAutoRefresh());
+</script>
+
+</body>
+</html>
