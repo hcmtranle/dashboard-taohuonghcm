@@ -1,5 +1,5 @@
-# Dashboard Công Việc – Lê Thành Tạo
-**Trường Tiểu học Nguyễn An Khương, Phường Đông Hưng Thuận**
+# Dashboard Công Việc – Cô Trần Thị Thu Hương & Thầy Lê Thành Tạo
+**Thạc sĩ quản lý giáo dục**
 
 ---
 
