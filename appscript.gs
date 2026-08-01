@@ -20,10 +20,10 @@
  */
 
 // ─── CẤU HÌNH ─────────────────────────────────────────────
-const SHEET_ID = '';  // Để trống để tự tạo sheet mới, hoặc điền ID Sheet có sẵn
+const SHEET_ID = ''; // Để trống để tự tạo sheet mới, hoặc điền ID Sheet có sẵn
 const SHEET_NAME_PRICES = 'GIA_CO_PHIEU';
-const SHEET_NAME_TASKS  = 'NHAC_NHO';
-const SHEET_NAME_LOG    = 'LOG';
+const SHEET_NAME_TASKS = 'NHAC_NHO';
+const SHEET_NAME_LOG = 'LOG';
 
 // Cổ phiếu mặc định cần theo dõi
 const DEFAULT_TICKERS = ['VNM', 'VCB', 'FPT', 'VRE'];
@@ -41,7 +41,7 @@ function doGet(e) {
       result = getTasks();
     } else if (action === 'push_price') {
       const ticker = e?.parameter?.ticker;
-      const price  = parseFloat(e?.parameter?.price || '0');
+      const price = parseFloat(e?.parameter?.price || '0');
       result = pushPriceToSheet(ticker, price);
     } else if (action === 'status') {
       result = { status: 'ok', time: new Date().toISOString() };
@@ -81,9 +81,58 @@ function getPrices(tickers) {
   return results;
 }
 
-// ─── GỌI API TCBS ─────────────────────────────────────────
+// ─── GỌI API CAFEF (nguồn ưu tiên - ổn định nhất) ─────────
+function fetchPriceFromCafef(ticker) {
+  // CafeF public data API - không cần xác thực
+  const url = 'https://cafef.vn/du-lieu/ajax/pagenew/datahistory/pricehistory.ashx?Symbol=' + ticker + '&StartDate=&EndDate=&PageIndex=1&PageSize=1';
+
+  try {
+    const response = UrlFetchApp.fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      muteHttpExceptions: true
+    });
+
+    if (response.getResponseCode() !== 200) return null;
+
+    const data = JSON.parse(response.getContentText());
+    const rows = data && data.Success && data.Data && data.Data.Data;
+
+    if (rows && rows.length > 0) {
+      const latest = rows[0];
+      const close = latest.GiaDongCua || 0;
+      const open = latest.GiaMoCua || 0;
+      if (!close) return null;
+
+      return {
+        ticker: ticker,
+        price: close,
+        open: open,
+        high: latest.GiaCaoNhat || 0,
+        low: latest.GiaThapNhat || 0,
+        volume: latest.KhoiLuongKhopLenh || 0,
+        change: close - open,
+        changePct: open ? ((close - open) / open * 100) : 0,
+        time: new Date().toISOString(),
+        source: 'CafeF'
+      };
+    }
+    return null;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ─── GỌI API TCBS (dự phòng) ────────────────────────────────
 function fetchPriceFromTCBS(ticker) {
-  // TCBS public API - không cần xác thực
+  // Ưu tiên CafeF vì ổn định hơn - Thầy Cô yêu cầu
+  const cafef = fetchPriceFromCafef(ticker);
+  if (cafef) return cafef;
+
+  // TCBS public API - không cần xác thực (dự phòng nếu CafeF lỗi)
   const url = 'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/' + ticker + '/price-history?page=0&size=1&headIndex=-1';
 
   try {
@@ -111,16 +160,16 @@ function fetchPriceFromTCBS(ticker) {
     if (data && data.data && data.data.length > 0) {
       const latest = data.data[0];
       return {
-        ticker:    ticker,
-        price:     latest.close || latest.price || 0,
-        open:      latest.open  || 0,
-        high:      latest.high  || 0,
-        low:       latest.low   || 0,
-        volume:    latest.volume || 0,
-        change:    latest.change || 0,
+        ticker: ticker,
+        price: latest.close || latest.price || 0,
+        open: latest.open || 0,
+        high: latest.high || 0,
+        low: latest.low || 0,
+        volume: latest.volume || 0,
+        change: latest.change || 0,
         changePct: latest.changePercent || 0,
-        time:      new Date().toISOString(),
-        source:    'TCBS'
+        time: new Date().toISOString(),
+        source: 'TCBS'
       };
     }
     return fetchPriceFromTCBSv1(ticker);
@@ -142,16 +191,16 @@ function fetchPriceFromTCBSv1(ticker) {
     if (data && data.data && data.data.length > 0) {
       const latest = data.data[data.data.length - 1];
       return {
-        ticker:    ticker,
-        price:     latest.close || 0,
-        open:      latest.open  || 0,
-        high:      latest.high  || 0,
-        low:       latest.low   || 0,
-        volume:    latest.volume || 0,
-        change:    (latest.close - latest.open) || 0,
+        ticker: ticker,
+        price: latest.close || 0,
+        open: latest.open || 0,
+        high: latest.high || 0,
+        low: latest.low || 0,
+        volume: latest.volume || 0,
+        change: (latest.close - latest.open) || 0,
         changePct: latest.open ? ((latest.close - latest.open) / latest.open * 100) : 0,
-        time:      new Date().toISOString(),
-        source:    'TCBS_v1'
+        time: new Date().toISOString(),
+        source: 'TCBS_v1'
       };
     }
   } catch(e) {
@@ -175,7 +224,7 @@ function fetchPriceFromGoogleFinance(ticker) {
     DriveApp.getFileById(ss.getId()).setTrashed(true); // Xóa file tạm
     return {
       ticker: ticker,
-      price:  typeof price === 'number' ? price : 0,
+      price: typeof price === 'number' ? price : 0,
       change: 0,
       source: 'GoogleFinance'
     };
@@ -222,7 +271,7 @@ function getTasks() {
       // Thêm dữ liệu mẫu
       const today = new Date();
       const demo = [
-        ['Họp tổ chuyên môn', new Date(today.getTime()), true,  'Cao', ''],
+        ['Họp tổ chuyên môn', new Date(today.getTime()), true, 'Cao', ''],
         ['Nộp kế hoạch bài dạy tuần 3', new Date(today.getTime() + 2*86400000), false, 'Cao', ''],
         ['Kiểm tra nội bộ - GV Nguyễn Thị B', new Date(today.getTime() + 4*86400000), false, 'Bình thường', ''],
         ['Đăng video YouTube kênh giáo dục', new Date(today.getTime() + 5*86400000), false, 'Bình thường', '']
@@ -240,11 +289,11 @@ function getTasks() {
       const isDone = row[2] === true || row[2] === 'TRUE' || row[2] === '✓';
       const priority = row[3] || 'Bình thường';
       tasks.push({
-        title:    row[0],
-        due:      (priority === 'Cao' ? '⚠️ ' : '📅 ') + due,
-        done:     isDone,
+        title: row[0],
+        due: (priority === 'Cao' ? '⚠️ ' : '📅 ') + due,
+        done: isDone,
         priority: priority,
-        note:     row[4] || ''
+        note: row[4] || ''
       });
     }
 
