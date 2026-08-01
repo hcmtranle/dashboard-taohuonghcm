@@ -1,0 +1,95 @@
+{
+  "_comment": "File này do Claude cập nhật tự động mỗi ngày (web search). Dashboard đọc trực tiếp file này để hiển thị tin tức/xu hướng kèm link thật.",
+  "updated": "2026-08-01T12:00:00+07:00",
+  "contentTrends": [
+    {
+      "title": "Vietnam EdTech Expo 2026: Tái cấu trúc giáo dục & nhân lực trong kỷ nguyên AI",
+      "summary": "Triển lãm ngày 15/8/2026 tại Hà Nội, quy tụ nhà quản lý, trường học, doanh nghiệp công nghệ bàn về chuyển đổi số giáo dục.",
+      "link": "https://edtechagency.net/language/vi/viet-nam-edtech-expo-2026-tai-cau-truc-giao-duc-nhan-luc-viet-nam-trong-ky-nguyen-ai/",
+      "source": "Edtech Agency"
+    },
+    {
+      "title": "Việt Nam dẫn đầu Đông Nam Á về tỷ lệ dùng AI để học tập",
+      "summary": "17% câu lệnh người Việt gửi tới AI của Google liên quan đến học tập - cao nhất khu vực 6 nước.",
+      "link": "https://baochinhphu.vn/ai-co-hoi-cua-giao-duc-viet-nam-trong-ky-nguyen-vuon-minh-102250522063457927.htm",
+      "source": "Báo Chính phủ"
+    },
+    {
+      "title": "Quy định mới: AI không được thay quyết định chuyên môn của giảng viên",
+      "summary": "Cơ sở giáo dục không được giao toàn bộ hoạt động đào tạo cho AI; ứng dụng AI trong kiểm tra đánh giá phải có kiểm soát.",
+      "link": "https://daidoanket.vn/chuan-hoa-quy-dinh-ung-dung-ai-trong-dao-tao.html",
+      "source": "Đại Đoàn Kết"
+    },
+    {
+      "title": "Chính sách khoa học công nghệ mới có hiệu lực từ tháng 8/2026",
+      "summary": "Tổng hợp các quy định, chính sách khoa học công nghệ bắt đầu áp dụng trong tháng 8/2026.",
+      "link": "https://luatvietnam.vn/linh-vuc-khac/chinh-sach-moi-ve-khoa-hoc-cong-nghe-hieu-luc-thang-8-2026-883-111006-article.html",
+      "source": "LuatVietnam"
+    }
+  ],
+  "videoIdeas": [
+    {
+      "title": "AI trong lớp học: 5 cách ứng dụng đúng quy định mới nhất",
+      "summary": "Video giải thích quy định mới về AI trong giáo dục (không thay giáo viên ra quyết định), kèm ví dụ thực tế lớp tiểu học.",
+      "link": "https://daidoanket.vn/chuan-hoa-quy-dinh-ung-dung-ai-trong-dao-tao.html"
+    },
+    {
+      "title": "Edutainment là gì? Vì sao video giáo dục ngắn đang bùng nổ trên TikTok",
+      "summary": "Phân tích xu hướng kết hợp giáo dục + giải trí, gợi ý công thức làm video giáo dục dễ viral.",
+      "link": "https://fchat.vn/blog/hanh-vi-nguoi-dung-tiktok.html"
+    },
+    {
+      "title": "Điểm tin Vietnam EdTech Expo 2026 - Những gì giáo viên cần biết",
+      "summary": "Tổng hợp nội dung chính của triển lãm EdTech lớn nhất năm, dành cho kênh giáo dục.",
+      "link": "https://edtechagency.net/language/vi/viet-nam-edtech-expo-2026-tai-cau-truc-giao-duc-nhan-luc-viet-nam-trong-ky-nguyen-ai/"
+    }
+  ],
+  "cryptoNews": [
+    {
+      "title": "Bitcoin dao động 86.700 - 90.000 USD, áp lực bán dài hạn hạ nhiệt",
+      "summary": "Nhà đầu tư nắm giữ Bitcoin dài hạn giảm bán ra, thị trường bớt áp lực giảm giá.",
+      "link": "https://vneconomy.vn/nha-dau-tu-bitcoin-dai-han-da-dung-xa-hang.htm",
+      "source": "VnEconomy"
+    },
+    {
+      "title": "Ethereum mất 32% giá trị từ đầu năm 2026, cá voi vẫn gom hàng",
+      "summary": "ETH giảm mạnh hơn BTC nhưng các ví lớn (>1000 ETH) đã mua thêm ~120.000 ETH, hiện nắm giữ 70% nguồn cung lưu hành.",
+      "link": "https://news.bitcoin.com/vi/cuoc-doi-dau-o-moc-2000-usd-ethereum-mat-32-gia-tri-vao-nam-2026-trong-khi-btc-van-giu-vung-vi-the/",
+      "source": "Bitcoin News"
+    },
+    {
+      "title": "Quỹ tiền số bị rút ròng 1,67 tỷ USD trong tuần qua",
+      "summary": "Mức rút vốn lớn thứ 2 từ đầu năm 2026, dòng tiền có thể đang dịch chuyển khỏi kim loại quý sang BTC/ETH.",
+      "link": "https://vn.investing.com/news/cryptocurrency-news",
+      "source": "Investing.com"
+    }
+  ],
+  "socialTrends": [
+    {
+      "platform": "TikTok",
+      "title": "Thuật toán TikTok 2026 ưu tiên nội dung phân tích sâu, không chỉ giải trí",
+      "summary": "Cập nhật thuật toán mới giúp video mang tính giáo dục, phân tích chuyên sâu dễ lên xu hướng hơn trước.",
+      "link": "https://accesstrade.vn/cap-nhat-thuat-toan-tiktok-moi-nhat/"
+    },
+    {
+      "platform": "Facebook",
+      "title": "Facebook vẫn là 'mảnh đất vàng' cho ngành Giáo dục tại Việt Nam",
+      "summary": "Facebook mạnh về xây cộng đồng, tạo niềm tin - phù hợp nội dung giáo dục dài hơi hơn TikTok.",
+      "link": "https://www.brandsvietnam.com/congdong/topic/influencer-marketing-viet-nam-2026-thi-truong-79-trieu-nguoi-dung-social-va-cuoc-choi-tiktok-facebook"
+    },
+    {
+      "platform": "Instagram",
+      "title": "Facebook đang biến Instagram thành nền tảng kiểu TikTok",
+      "summary": "Instagram đẩy mạnh Reels và nội dung ngắn, ảnh hưởng chiến lược đăng bài cho các trang giáo dục.",
+      "link": "https://vov.gov.vn/facebook-sap-bien-instagram-thanh-tiktok-dtnew-281744"
+    }
+  ],
+  "keywords": [
+    { "label": "AI trong giáo dục", "url": "https://trends.google.com/trends/explore?geo=VN&q=AI%20trong%20gi%C3%A1o%20d%E1%BB%A5c" },
+    { "label": "Kế hoạch bài dạy", "url": "https://trends.google.com/trends/explore?geo=VN&q=k%E1%BA%BF%20ho%E1%BA%A1ch%20b%C3%A0i%20d%E1%BA%A1y" },
+    { "label": "Chuyển đổi số giáo dục", "url": "https://trends.google.com/trends/explore?geo=VN&q=chuy%E1%BB%83n%20%C4%91%E1%BB%95i%20s%E1%BB%91%20gi%C3%A1o%20d%E1%BB%A5c" },
+    { "label": "Edutainment", "url": "https://trends.google.com/trends/explore?geo=VN&q=edutainment" },
+    { "label": "Giá cổ phiếu ngân hàng", "url": "https://trends.google.com/trends/explore?geo=VN&q=gi%C3%A1%20c%E1%BB%95%20phi%E1%BA%BFu%20ng%C3%A2n%20h%C3%A0ng" },
+    { "label": "Bitcoin hôm nay", "url": "https://trends.google.com/trends/explore?geo=VN&q=bitcoin%20h%C3%B4m%20nay" }
+  ]
+}

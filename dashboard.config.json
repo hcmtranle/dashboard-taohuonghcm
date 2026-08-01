@@ -1,10 +1,10 @@
 {
   "_comment": "File này điều khiển toàn bộ dashboard. Khi Thầy muốn thêm ý tưởng mới, chỉ cần nói với em và em sẽ cập nhật file này.",
-  "_version": "1.0.0",
-  "_updated": "2026-07-27",
+  "_version": "2.0.0",
+  "_updated": "2026-08-01",
 
   "meta": {
-    "title": "Dashboard - Lê Thành Tạo",
+    "title": "Dashboard - taohuonghcm",
     "subtitle": "Lê Thành Tạo & Trần Thị Thu Hương",
     "ownerEmail": "hcmtranle@gmail.com",
     "timezone": "Asia/Ho_Chi_Minh",
@@ -15,96 +15,57 @@
   "appScript": {
     "stockApiUrl": "https://script.google.com/macros/s/AKfycbwxBDFkvEmOa395kVICWteVmxa9IFNmI_3vPIaUz_QuJXzxdyVv7rtk_A6l7ZCZjuvKQQ/exec",
     "sheetsApiUrl": "https://script.google.com/macros/s/AKfycbwxBDFkvEmOa395kVICWteVmxa9IFNmI_3vPIaUz_QuJXzxdyVv7rtk_A6l7ZCZjuvKQQ/exec",
-    "_help": "Deploy appscript.gs làm Web App, dán URL vào đây. Xem README.md để biết thêm chi tiết."
+    "_help": "1 URL App Script dùng chung cho giá cổ phiếu, nhắc nhở và Gmail."
   },
 
   "stocks": {
     "enabled": true,
-    "title": "Cảnh báo chứng khoán",
-    "subtitle": "Giá qua App Script + TCBS",
+    "title": "Cổ phiếu theo dõi",
     "items": [
-      { "ticker": "VNM",  "name": "Vinamilk",       "lowerAlert": 65,  "upperAlert": 72  },
-      { "ticker": "VCB",  "name": "Vietcombank",    "lowerAlert": 55,  "upperAlert": 62  },
-      { "ticker": "FPT",  "name": "FPT Corp",       "lowerAlert": 120, "upperAlert": 135 },
-      { "ticker": "VRE",  "name": "Vincom Retail",  "lowerAlert": 20,  "upperAlert": 24  },
-      { "ticker": "ACB",  "name": "ACB Bank",       "lowerAlert": 22,  "upperAlert": 28  },
-      { "ticker": "MBB",  "name": "MB Bank",        "lowerAlert": 20,  "upperAlert": 26  },
-      { "ticker": "SHB",  "name": "SHB Bank",       "lowerAlert": 10,  "upperAlert": 14  },
-      { "ticker": "VPB",  "name": "VPBank",         "lowerAlert": 18,  "upperAlert": 24  },
-      { "ticker": "VIX",  "name": "VIX Securities", "lowerAlert": 13,  "upperAlert": 18  },
-      { "ticker": "HCM",  "name": "HCMC Securities","lowerAlert": 18,  "upperAlert": 25  },
-      { "ticker": "SSI",  "name": "SSI Securities", "lowerAlert": 22,  "upperAlert": 30  }
+      { "ticker": "VNM", "name": "Vinamilk" },
+      { "ticker": "VCB", "name": "Vietcombank" },
+      { "ticker": "FPT", "name": "FPT Corp" },
+      { "ticker": "VRE", "name": "Vincom Retail" },
+      { "ticker": "ACB", "name": "ACB Bank" },
+      { "ticker": "MBB", "name": "MB Bank" },
+      { "ticker": "SHB", "name": "SHB Bank" },
+      { "ticker": "VPB", "name": "VPBank" },
+      { "ticker": "VIX", "name": "VIX Securities" },
+      { "ticker": "HCM", "name": "HCMC Securities" },
+      { "ticker": "SSI", "name": "SSI Securities" }
     ],
     "_addStock": "Thầy muốn theo dõi mã nào thêm, nói với em là em thêm vào đây"
   },
 
   "crypto": {
     "enabled": true,
-    "title": "Cảnh báo Coin",
-    "subtitle": "CoinGecko Live Real-time API",
+    "title": "Coin theo dõi",
     "items": [
-      { "id": "bitcoin",  "symbol": "BTC", "lowerAlert": 60000, "upperAlert": 75000 },
-      { "id": "ethereum", "symbol": "ETH", "lowerAlert": 3000,  "upperAlert": 4000  },
-      { "id": "cardano",  "symbol": "ADA", "lowerAlert": 0.35,  "upperAlert": 0.65  }
+      { "id": "bitcoin", "symbol": "BTC" },
+      { "id": "ethereum", "symbol": "ETH" },
+      { "id": "cardano", "symbol": "ADA" }
     ],
     "_addCoin": "Nói với em tên coin muốn theo dõi (vd: solana, bnb...)"
   },
 
-  "gmail": {
-    "enabled": true,
-    "title": "Gmail",
-    "email": "hcmtranle@gmail.com"
-  },
+  "gmail": { "enabled": true, "title": "Gmail", "email": "hcmtranle@gmail.com" },
 
-  "calendar": {
-    "enabled": true,
-    "title": "Lịch công tác",
-    "calendarId": "hcmtranle@gmail.com"
-  },
+  "calendar": { "enabled": true, "title": "Lịch công tác", "calendarId": "hcmtranle@gmail.com" },
 
   "marketLinks": {
     "enabled": true,
     "title": "Phân tích thị trường chuyên sâu",
-    "subtitle": "Mở nhanh các cổng phân tích khối ngoại mua/bán ròng, dòng tiền ngành, giao dịch thỏa thuận",
     "links": [
-      { "label": "SSI iBoard",       "url": "https://iboard.ssi.com.vn/",          "color": "#7c3aed" },
-      { "label": "TCBS TCInvest",    "url": "https://tcinvest.tcbs.com.vn/",        "color": "#2563eb" },
-      { "label": "Vietstock - Khối ngoại", "url": "https://vietstock.vn/",         "color": "#16a34a" },
-      { "label": "CafeF - Dữ liệu", "url": "https://cafef.vn/du-lieu.chn",         "color": "#ea580c" }
+      { "label": "SSI iBoard", "url": "https://iboard.ssi.com.vn/", "color": "#7c3aed" },
+      { "label": "TCBS TCInvest", "url": "https://tcinvest.tcbs.com.vn/", "color": "#2563eb" },
+      { "label": "Vietstock - Khối ngoại", "url": "https://vietstock.vn/", "color": "#16a34a" },
+      { "label": "CafeF - Dữ liệu", "url": "https://cafef.vn/du-lieu.chn", "color": "#ea580c" }
     ],
     "_addLink": "Thầy muốn thêm link phân tích nào, nói với em"
   },
 
-  "contentTrends": {
-    "enabled": true,
-    "title": "Xu hướng nội dung",
-    "subtitle": "Theo dõi xu hướng để viết bài & tạo video",
-    "links": [
-      { "label": "Google Trends VN",   "url": "https://trends.google.com/trends/?geo=VN", "icon": "📈" },
-      { "label": "YouTube Studio",     "url": "https://studio.youtube.com/",               "icon": "🎬" },
-      { "label": "Google Search Console", "url": "https://search.google.com/search-console", "icon": "🔍" },
-      { "label": "Keyword Planner",    "url": "https://ads.google.com/aw/keywordplanner",  "icon": "🔑" }
-    ]
-  },
-
-  "scheduledTasks": {
-    "enabled": true,
-    "title": "Nhắc nhở & Nhiệm vụ",
-    "sheetsUrl": "PASTE_YOUR_GOOGLE_SHEETS_URL_HERE",
-    "_note": "Khi App Script được cấu hình, các nhắc nhở sẽ hiện ở đây tự động"
-  },
-
   "widgets": {
-    "_comment": "Thứ tự hiển thị các widget trên dashboard. Đặt enabled=false để ẩn",
-    "order": [
-      "clock",
-      "stocks",
-      "crypto",
-      "gmail",
-      "calendar",
-      "marketLinks",
-      "contentTrends",
-      "scheduledTasks"
-    ]
+    "_comment": "Bố cục trang: việc cần làm/lịch/gmail/nội dung ở trên, tài chính ở cuối trang.",
+    "order": ["tasks", "calendar", "gmail", "videoIdeas", "contentTrends", "socialTrends", "keywords", "stocks", "crypto", "marketLinks"]
   }
 }
