@@ -285,7 +285,7 @@ select.btn { cursor:pointer; }
     </div>
   </div>
 
-  <div style="text-align:center;padding:20px 0;color:var(--text3);font-size:13px;border-top:1px solid var(--border);margin-top:8px">
+  <div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px">
     © Cô Hương &amp; Claude · Email: hcmtranle@gmail.com · Điện thoại: +84903662768
   </div>
 
@@ -311,10 +311,21 @@ async function loadConfig() {
 
 async function loadContentData() {
   try {
-    const r = await fetch('./content.json?' + Date.now());
-    CONTENT = await r.json();
+    const apiUrl = CONFIG?.appScript?.stockApiUrl;
+    if (apiUrl && !apiUrl.includes('PASTE_YOUR')) {
+      const r = await fetch(apiUrl + '?action=content');
+      CONTENT = await r.json();
+    } else {
+      const r = await fetch('./content.json?' + Date.now());
+      CONTENT = await r.json();
+    }
   } catch(e) {
-    CONTENT = { contentTrends:[], videoIdeas:[], cryptoNews:[], socialTrends:[], keywords:[] };
+    try {
+      const r2 = await fetch('./content.json?' + Date.now());
+      CONTENT = await r2.json();
+    } catch(e2) {
+      CONTENT = { contentTrends:[], videoIdeas:[], cryptoNews:[], socialTrends:[], keywords:[] };
+    }
   }
   renderContentTrends();
   renderVideoIdeas();
@@ -423,7 +434,7 @@ function gmailFallbackLinks(msg) {
     </div></div>`;
 }
 
-// ─── Content trends / video ideas / social / keywords (từ content.json) ─
+// ─── Content trends / video ideas / social / keywords (từ Apps Script / Drive) ─
 function renderContentTrends() {
   const el = document.getElementById('content-trends-list');
   const items = CONTENT?.contentTrends || [];
