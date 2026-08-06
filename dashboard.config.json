@@ -64,7 +64,13 @@
     "_addLink": "Thầy muốn thêm link phân tích nào, nói với em"
   },
 
-  "widgets": {
+  "quickLinks": {
+"_help": "Link cho các widget. Đổi link ở đây rồi báo em (hoặc tự commit) — dashboard sẽ tự cập nhật.",
+"tasksSheetUrl": "https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit",
+"videoIdeasClaudeUrl": "https://claude.ai"
+},
+
+"widgets": {
     "_comment": "Bố cục trang: việc cần làm/lịch/gmail/nội dung ở trên, tài chính ở cuối trang.",
     "order": ["tasks", "calendar", "gmail", "videoIdeas", "contentTrends", "socialTrends", "keywords", "stocks", "crypto", "marketLinks"]
   }
