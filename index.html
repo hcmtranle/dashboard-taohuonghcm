@@ -138,8 +138,8 @@ select.btn { cursor:pointer; }
     <div class="card">
       <div class="card-header">
         <div><h2><span class="card-icon" style="background:#eff6ff">📝</span> Nhắc nhở & Nhiệm vụ</h2>
-        <div class="subtitle">Đồng bộ từ <a href="https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:none;font-weight:600">Google Sheet ↗</a></div></div>
-        <a href="https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit" target="_blank" rel="noopener" class="btn" style="font-size:11px;padding:4px 10px;text-decoration:none;margin-right:6px">📊 Mở Sheet →</a><button class="btn" onclick="loadTasks()" style="font-size:11px;padding:4px 10px">↻</button>
+        <div class="subtitle">Đồng bộ từ <a href="https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit" target="_blank" rel="noopener" id="lnkSheet1" style="color:#2563eb;text-decoration:none;font-weight:600">Google Sheet ↗</a></div></div>
+        <a href="https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit" target="_blank" rel="noopener" class="btn" style="font-size:11px;padding:4px 10px;text-decoration:none;margin-right:6px" id="lnkSheet2">📊 Mở Sheet →</a><button class="btn" onclick="loadTasks()" style="font-size:11px;padding:4px 10px">↻</button>
       </div>
       <div class="card-body" id="task-list">
         <div class="skeleton" style="height:40px;margin-bottom:8px"></div>
@@ -177,7 +177,7 @@ select.btn { cursor:pointer; }
     <div class="card">
       <div class="card-header">
         <div><h2><span class="card-icon" style="background:#fdf4ff">🔥</span> Gợi ý Video & Bài viết hôm nay</h2>
-        <div class="subtitle" id="video-ideas-updated">Claude tìm & cập nhật hàng ngày · <a href="https://claude.ai" target="_blank" rel="noopener" style="color:#a21caf;text-decoration:none;font-weight:600">Mở Claude ↗</a></div></div>
+        <div class="subtitle" id="video-ideas-updated">Claude tìm & cập nhật hàng ngày · <a href="https://claude.ai" target="_blank" rel="noopener" id="lnkClaude" style="color:#a21caf;text-decoration:none;font-weight:600">Mở Claude ↗</a></div></div>
       </div>
       <div class="card-body" id="video-ideas-list">
         <div class="skeleton" style="height:36px;margin-bottom:8px"></div>
@@ -627,7 +627,8 @@ function startAutoRefresh() {
   refreshTimer = setInterval(() => { loadStocks(); loadCrypto(); }, secs*1000);
 }
 
-loadConfig().then(startAutoRefresh);
+function wireQuickLinks(){try{var c=(typeof CONFIG!=="undefined"&&CONFIG)||{};var q=c.quickLinks||{};var s=q.tasksSheetUrl||"";var cl=q.videoIdeasClaudeUrl||"";if(s){var a1=document.getElementById("lnkSheet1");if(a1)a1.href=s;var a2=document.getElementById("lnkSheet2");if(a2)a2.href=s;}if(cl){var a3=document.getElementById("lnkClaude");if(a3)a3.href=cl;}}catch(e){}}
+    loadConfig().then(function(){wireQuickLinks();startAutoRefresh();});
 </script>
 </body>
 </html>
