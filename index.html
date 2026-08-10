@@ -134,7 +134,20 @@ select.btn { cursor:pointer; }
 <main class="main" id="main-content">
 
   <!-- ═══ KHU VỰC CÔNG VIỆC (ưu tiên hàng đầu) ═══ -->
-  <div class="grid-2">
+  <div class="grid-3">
+<div class="card">
+<div class="card-header">
+<div><h2><span class="card-icon" style="background:#fef2f2">🎯</span> Việc ưu tiên</h2>
+<div class="subtitle">Công việc ưu tiên cao - từ Google Sheets</div></div>
+<button class="btn" onclick="loadPriorityTasks()" style="font-size:11px;padding:4px 10px">↻</button>
+</div>
+<div class="card-body" id="priority-tasks-list">
+<div class="skeleton" style="height:40px;margin-bottom:8px"></div>
+<div class="skeleton" style="height:40px;margin-bottom:8px"></div>
+<div class="skeleton" style="height:40px"></div>
+</div>
+</div>
+
     <div class="card">
       <div class="card-header">
         <div><h2><span class="card-icon" style="background:#eff6ff">📝</span> Nhắc nhở & Nhiệm vụ</h2>
@@ -349,10 +362,11 @@ function applyConfig() {
   loadStocks();
   loadCrypto();
   loadTasks();
+  loadPriorityTasks();
   loadGmail();
 }
 
-function refreshAll() { loadStocks(); loadCrypto(); loadTasks(); loadGmail(); loadContentData(); showToast('🔄','Đã làm mới toàn bộ dữ liệu','info'); }
+function refreshAll() { loadStocks(); loadCrypto(); loadTasks(); loadPriorityTasks(); loadGmail(); loadContentData(); showToast('🔄','Đã làm mới toàn bộ dữ liệu','info'); }
 
 // ─── Clock ──────────────────────────────────────────────
 function updateClock() {
@@ -383,6 +397,42 @@ async function loadTasks() {
   } catch(e) {
     el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--danger)">⚠️ Không tải được nhiệm vụ</div>';
   }
+}
+
+// ─── Việc ưu tiên (từ Google Sheets qua Apps Script action=sheet-tasks) ─
+async function loadPriorityTasks() {
+const el = document.getElementById('priority-tasks-list');
+const url = CONFIG?.appScript?.stockApiUrl;
+if (!url || url.includes('PASTE_YOUR')) { el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3)">⚙️ Cần cấu hình App Script URL</div>'; return; }
+try {
+const r = await fetch(`${url}?action=sheet-tasks`);
+const data = await r.json();
+if (data.error) throw new Error(data.error);
+const tasks = data.tasks || [];
+const priorityTasks = tasks.filter(t => t.priority === 'Cao' || t.status === 'Đang thực hiện').slice(0,5);
+if (!priorityTasks.length) { el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3)">✓ Không có việc ưu tiên</div>'; return; }
+el.innerHTML = priorityTasks.map(t => {
+const priorityColor = t.priority === 'Cao' ? 'var(--danger)' : t.priority === 'Trung bình' ? 'var(--warning)' : 'var(--text3)';
+const daysLeft = t.dueDate ? calcDaysLeft(t.dueDate) : null;
+const urgent = daysLeft !== null && daysLeft <= 2;
+return `<div class="task-item">
+<div class="task-check" style="background:${priorityColor};border-color:${priorityColor}"></div>
+<div class="task-content">
+<div class="task-title" style="color:${priorityColor}">${escapeHtml(t.name)}</div>
+<div class="task-due">👤 ${escapeHtml(t.owner||'')} · 📊 ${t.progress||0}%${t.dueDate?(' · 📅 '+t.dueDate):''}${urgent?(' · ⚠️ Còn '+daysLeft+' ngày'):''}</div>
+</div>
+</div>`;
+}).join('');
+} catch(e) {
+el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--danger)">⚠️ Không tải được: ' + escapeHtml(e.message) + '</div>';
+}
+}
+function calcDaysLeft(dueDateStr) {
+try {
+const due = new Date(dueDateStr); const today = new Date();
+today.setHours(0,0,0,0); due.setHours(0,0,0,0);
+return Math.floor((due-today)/(1000*60*60*24));
+} catch(e) { return null; }
 }
 
 // ─── Gmail ──────────────────────────────────────────────
@@ -624,7 +674,7 @@ let refreshTimer;
 function startAutoRefresh() {
   clearInterval(refreshTimer);
   const secs = CONFIG?.meta?.autoRefreshSeconds || 60;
-  refreshTimer = setInterval(() => { loadStocks(); loadCrypto(); }, secs*1000);
+  refreshTimer = setInterval(() => { loadStocks(); loadCrypto(); loadPriorityTasks(); }, secs*1000);
 }
 
 function wireQuickLinks(){try{var c=(typeof CONFIG!=="undefined"&&CONFIG)||{};var q=c.quickLinks||{};var s=q.tasksSheetUrl||"";var cl=q.videoIdeasClaudeUrl||"";if(s){var a1=document.getElementById("lnkSheet1");if(a1)a1.href=s;var a2=document.getElementById("lnkSheet2");if(a2)a2.href=s;}if(cl){var a3=document.getElementById("lnkClaude");if(a3)a3.href=cl;}}catch(e){}}
