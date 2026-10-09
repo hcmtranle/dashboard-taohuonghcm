@@ -69,6 +69,8 @@ function doGet(e) {
       result = getProjects_();
     } else if (action === 'add-project') {
       result = addProject_(e?.parameter?.name, e?.parameter?.deploy, e?.parameter?.edit);
+    } else if (action === 'update-project') {
+      result = updateProject_(e?.parameter?.id, e?.parameter?.name, e?.parameter?.deploy, e?.parameter?.edit);
     } else if (action === 'remove-project') {
       result = removeProject_(e?.parameter?.id);
     } else if (action === 'status') {
@@ -439,6 +441,28 @@ function addProject_(name, deploy, edit) {
     const id = 'P-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
     sheet.appendRow([id, name, (deploy || '').trim(), (edit || '').trim()]);
     return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function updateProject_(id, name, deploy, edit) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID dự án' };
+    if (!name) return { success: false, error: 'Thiếu tên dự án' };
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_PROJECTS);
+    if (!sheet) return { success: false, error: 'Chưa có danh sách dự án' };
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 3).setValues([[name, (deploy || '').trim(), (edit || '').trim()]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy dự án' };
   } catch(e) {
     return { success: false, error: e.toString() };
   }

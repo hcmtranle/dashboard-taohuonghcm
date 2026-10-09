@@ -355,7 +355,8 @@ select.btn { cursor:pointer; }
 <!-- ═══ MODAL: THÊM DỰ ÁN ═══ -->
 <div id="project-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--card);border-radius:var(--radius);padding:20px;width:100%;max-width:380px;box-shadow:var(--shadow-hover)">
-    <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">📦 Thêm dự án</h3>
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:12px" id="project-modal-title">📦 Thêm dự án</h3>
+    <input type="hidden" id="proj-id">
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">Tên dự án</label>
       <input type="text" id="proj-name" placeholder="VD: Dashboard điểm danh" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
@@ -536,14 +537,28 @@ function renderProjects() {
     <td>${p.deploy ? `<a href="${p.deploy}" target="_blank" rel="noopener" style="color:var(--text);font-weight:600;text-decoration:none">${escapeHtml(p.name)}</a>` : `<span style="font-weight:600">${escapeHtml(p.name)}</span>`}</td>
     <td style="text-align:right;white-space:nowrap">
       ${p.edit ? `<a href="${p.edit}" target="_blank" rel="noopener" title="Mở trang chỉnh sửa" style="margin-right:12px;text-decoration:none;font-size:13px">⚙️</a>` : ''}
+      <a href="#" onclick="openEditProject('${p.id}');return false" style="margin-right:12px;font-size:12px;text-decoration:none">✏️ Sửa</a>
       <a href="#" onclick="removeProject('${p.id}');return false" style="color:var(--danger);font-size:12px;text-decoration:none">Xoá</a>
     </td>
   </tr>`).join('');
 }
 function openAddProject() {
+  document.getElementById('project-modal-title').textContent = '📦 Thêm dự án';
+  document.getElementById('proj-id').value = '';
   document.getElementById('proj-name').value = '';
   document.getElementById('proj-deploy').value = '';
   document.getElementById('proj-edit').value = '';
+  document.getElementById('project-modal-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('proj-name').focus(), 50);
+}
+function openEditProject(id) {
+  const p = projectsData.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('project-modal-title').textContent = '✏️ Sửa dự án';
+  document.getElementById('proj-id').value = p.id;
+  document.getElementById('proj-name').value = p.name || '';
+  document.getElementById('proj-deploy').value = p.deploy || '';
+  document.getElementById('proj-edit').value = p.edit || '';
   document.getElementById('project-modal-overlay').style.display = 'flex';
   setTimeout(() => document.getElementById('proj-name').focus(), 50);
 }
@@ -551,6 +566,7 @@ function closeAddProject() {
   document.getElementById('project-modal-overlay').style.display = 'none';
 }
 async function submitAddProject() {
+  const id = document.getElementById('proj-id').value.trim();
   const name = document.getElementById('proj-name').value.trim();
   if (!name) { showToast('⚠️','Nhập tên dự án','warn'); return; }
   const url = CONFIG?.appScript?.stockApiUrl;
@@ -559,16 +575,17 @@ async function submitAddProject() {
   btn.disabled = true; btn.textContent = 'Đang lưu...';
   try {
     const params = new URLSearchParams({
-      action: 'add-project',
+      action: id ? 'update-project' : 'add-project',
       name: name,
       deploy: document.getElementById('proj-deploy').value.trim(),
       edit: document.getElementById('proj-edit').value.trim()
     });
+    if (id) params.set('id', id);
     const r = await fetch(url + '?' + params.toString());
     const res = await r.json();
     if (!res.success) throw new Error(res.error || 'Lỗi không rõ');
     closeAddProject();
-    showToast('✅','Đã thêm dự án','info');
+    showToast('✅', id ? 'Đã cập nhật dự án' : 'Đã thêm dự án', 'info');
     loadProjects();
   } catch(e) {
     showToast('⚠️','Lỗi lưu: ' + e.message,'warn');
