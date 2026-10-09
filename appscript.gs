@@ -28,6 +28,8 @@ const SHEET_NAME_TASKS = 'NHAC_NHO';
 const SHEET_NAME_LOG = 'LOG';
 const SHEET_NAME_STOCKLIST = 'DANH_MUC_CP';
 const SHEET_NAME_PROJECTS = 'DU_AN';
+const SHEET_NAME_SPACES = 'SPACES';
+const SHEET_NAME_KHO = 'KHO_DU_LIEU';
 
 // Cổ phiếu mặc định cần theo dõi
 const DEFAULT_TICKERS = ['VNM', 'VCB', 'FPT', 'VRE'];
@@ -73,6 +75,24 @@ function doGet(e) {
       result = updateProject_(e?.parameter?.id, e?.parameter?.name, e?.parameter?.deploy, e?.parameter?.edit);
     } else if (action === 'remove-project') {
       result = removeProject_(e?.parameter?.id);
+    } else if (action === 'space-items') {
+      result = getSpaceItems_(e?.parameter?.space);
+    } else if (action === 'add-space-item') {
+      result = addSpaceItem_(e?.parameter?.space, e?.parameter?.name, e?.parameter?.desc, e?.parameter?.deploy, e?.parameter?.edit);
+    } else if (action === 'update-space-item') {
+      result = updateSpaceItem_(e?.parameter?.space, e?.parameter?.id, e?.parameter?.name, e?.parameter?.desc, e?.parameter?.deploy, e?.parameter?.edit);
+    } else if (action === 'remove-space-item') {
+      result = removeSpaceItem_(e?.parameter?.space, e?.parameter?.id);
+    } else if (action === 'kho-items') {
+      result = getKhoItems_();
+    } else if (action === 'add-kho-item') {
+      result = addKhoItem_(e?.parameter?.icon, e?.parameter?.name, e?.parameter?.desc, e?.parameter?.url);
+    } else if (action === 'update-kho-item') {
+      result = updateKhoItem_(e?.parameter?.id, e?.parameter?.icon, e?.parameter?.name, e?.parameter?.desc, e?.parameter?.url);
+    } else if (action === 'remove-kho-item') {
+      result = removeKhoItem_(e?.parameter?.id);
+    } else if (action === 'drive-search') {
+      result = driveSearch_(e?.parameter?.query, e?.parameter?.folderId);
     } else if (action === 'status') {
       result = { status: 'ok', time: new Date().toISOString() };
     } else {
@@ -480,6 +500,242 @@ function removeProject_(id) {
     return { success: true };
   } catch(e) {
     return { success: false, error: e.toString() };
+  }
+}
+
+// ─── DASHBOARD TỔNG HỢP: SPACES (Cô Hương / Thầy Cô+AI / Smart School / Widget dự phòng) ─
+// 1 sheet chung "SPACES" dùng cho mọi không gian, lọc theo cột "space"
+function getSpaceItems_(space) {
+  try {
+    space = (space || '').trim();
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_SPACES);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_SPACES);
+      sheet.getRange(1, 1, 1, 6).setValues([['space', 'id', 'ten', 'mo_ta', 'link_deploy', 'link_edit']]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+    }
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][2]) continue;
+      if (space && String(data[i][0]) !== space) continue;
+      items.push({ space: String(data[i][0] || ''), id: String(data[i][1] || ('S' + i)), name: data[i][2], desc: data[i][3] || '', deploy: data[i][4] || '', edit: data[i][5] || '' });
+    }
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+function addSpaceItem_(space, name, desc, deploy, edit) {
+  try {
+    space = (space || '').trim();
+    name = (name || '').trim();
+    if (!space) return { success: false, error: 'Thiếu không gian' };
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_SPACES);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_SPACES);
+      sheet.getRange(1, 1, 1, 6).setValues([['space', 'id', 'ten', 'mo_ta', 'link_deploy', 'link_edit']]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+    }
+    const id = 'S-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([space, id, name, (desc || '').trim(), (deploy || '').trim(), (edit || '').trim()]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function updateSpaceItem_(space, id, name, desc, deploy, edit) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_SPACES);
+    if (!sheet) return { success: false, error: 'Chưa có dữ liệu' };
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][1]) === id) {
+        sheet.getRange(i + 1, 3, 1, 4).setValues([[name, (desc || '').trim(), (deploy || '').trim(), (edit || '').trim()]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeSpaceItem_(space, id) {
+  try {
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_SPACES);
+    if (!sheet) return { success: true };
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][1]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── DASHBOARD TỔNG HỢP: KHO DỮ LIỆU ──────────────────────
+function getKhoItems_() {
+  try {
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_KHO);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_KHO);
+      sheet.getRange(1, 1, 1, 5).setValues([['id', 'icon', 'ten', 'mo_ta', 'url']]).setFontWeight('bold').setBackground('#34a853').setFontColor('#ffffff');
+    }
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][2]) continue;
+      items.push({ id: String(data[i][0] || ('K' + i)), icon: data[i][1] || '📄', name: data[i][2], desc: data[i][3] || '', url: data[i][4] || '' });
+    }
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+function addKhoItem_(icon, name, desc, url) {
+  try {
+    name = (name || '').trim();
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_KHO);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_KHO);
+      sheet.getRange(1, 1, 1, 5).setValues([['id', 'icon', 'ten', 'mo_ta', 'url']]).setFontWeight('bold').setBackground('#34a853').setFontColor('#ffffff');
+    }
+    const id = 'K-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, (icon || '📄').trim(), name, (desc || '').trim(), (url || '').trim()]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function updateKhoItem_(id, icon, name, desc, url) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_KHO);
+    if (!sheet) return { success: false, error: 'Chưa có dữ liệu' };
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 4).setValues([[(icon || '📄').trim(), name, (desc || '').trim(), (url || '').trim()]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeKhoItem_(id) {
+  try {
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_KHO);
+    if (!sheet) return { success: true };
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── TÌM KIẾM TOÀN DRIVE (tên + nội dung file) ────────────
+// folderId (tuỳ chọn): giới hạn quét trong 1 thư mục + thư mục con (đỡ chậm với Drive nhiều file).
+// Chấp nhận folderId thô hoặc nguyên link Drive (tự tách ID ra).
+function _extractFolderId(raw) {
+  raw = (raw || '').trim();
+  if (!raw) return '';
+  const m = raw.match(/[-\w]{25,}/); // Drive ID dạng chuỗi dài chữ+số+gạch ngang/gạch dưới
+  return m ? m[0] : raw;
+}
+
+function _collectFolderIds(rootId, maxFolders) {
+  const ids = [rootId];
+  const queue = [rootId];
+  let guard = 0;
+  while (queue.length && ids.length < maxFolders && guard < maxFolders * 2) {
+    guard++;
+    const curr = queue.shift();
+    try {
+      const it = DriveApp.getFolderById(curr).getFolders();
+      while (it.hasNext() && ids.length < maxFolders) {
+        const f = it.next();
+        ids.push(f.getId());
+        queue.push(f.getId());
+      }
+    } catch(e) { /* bỏ qua thư mục không truy cập được */ }
+  }
+  return ids;
+}
+
+function driveSearch_(query, folderIdRaw) {
+  try {
+    query = (query || '').trim();
+    if (!query) return { items: [], error: 'Thiếu từ khoá tìm kiếm' };
+    const qEsc = query.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const folderId = _extractFolderId(folderIdRaw);
+    const MAX_RESULTS = 40;
+    const found = {}; // id -> item (gộp trùng)
+
+    function runSearch(gQuery) {
+      const it = DriveApp.searchFiles(gQuery);
+      let n = 0;
+      while (it.hasNext() && n < MAX_RESULTS) {
+        const f = it.next();
+        n++;
+        const id = f.getId();
+        if (found[id]) continue;
+        found[id] = {
+          id: id,
+          name: f.getName(),
+          url: f.getUrl(),
+          mimeType: f.getMimeType(),
+          modified: f.getLastUpdated() ? f.getLastUpdated().toISOString() : '',
+          matchType: gQuery.indexOf('fullText') >= 0 ? 'noi_dung' : 'ten_file',
+        };
+      }
+    }
+
+    if (folderId) {
+      // Quét giới hạn trong 1 thư mục + thư mục con (tối đa 150 thư mục để tránh timeout)
+      const folderIds = _collectFolderIds(folderId, 150);
+      const BATCH = 15;
+      for (let i = 0; i < folderIds.length; i += BATCH) {
+        const batch = folderIds.slice(i, i + BATCH);
+        const parentClause = '(' + batch.map(id => `'${id}' in parents`).join(' or ') + ')';
+        runSearch(`trashed = false and ${parentClause} and title contains '${qEsc}'`);
+        runSearch(`trashed = false and ${parentClause} and fullText contains '${qEsc}'`);
+      }
+    } else {
+      // Quét toàn bộ Drive — ưu tiên khớp tên trước, rồi tới nội dung
+      runSearch(`trashed = false and title contains '${qEsc}'`);
+      runSearch(`trashed = false and fullText contains '${qEsc}'`);
+    }
+
+    return { items: Object.values(found).slice(0, MAX_RESULTS), scoped: !!folderId };
+  } catch(e) {
+    return { items: [], error: e.toString() };
   }
 }
 
