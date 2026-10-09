@@ -1,7 +1,7 @@
 /**
  * ============================================================
  * DASHBOARD APP SCRIPT — taohuonghcm
- * Cô Trần Thị Thu Hương & Thầy Lê Thành Tạo
+ * Thầy Lê Thành Tạo
  * ============================================================
  *
  * CÁCH DEPLOY:
@@ -17,6 +17,7 @@
  * GET {URL}?action=tasks
  * GET {URL}?action=gmail&max=8
  * GET {URL}?action=push_price&ticker=VNM&price=68.5
+ * GET {URL}?action=content                            (nội dung tin tức từ Drive)
  * ============================================================
  */
 
@@ -25,6 +26,8 @@ const SHEET_ID = ''; // Để trống để tự tạo sheet mới, hoặc đi�
 const SHEET_NAME_PRICES = 'GIA_CO_PHIEU';
 const SHEET_NAME_TASKS = 'NHAC_NHO';
 const SHEET_NAME_LOG = 'LOG';
+const SHEET_NAME_STOCKLIST = 'DANH_MUC_CP';
+const SHEET_NAME_PROJECTS = 'DU_AN';
 
 // Cổ phiếu mặc định cần theo dõi
 const DEFAULT_TICKERS = ['VNM', 'VCB', 'FPT', 'VRE'];
@@ -46,10 +49,28 @@ function doGet(e) {
     } else if (action === 'gmail') {
       const max = parseInt(e?.parameter?.max || '8', 10);
       result = getGmailSummary(max);
+  } else if (action === 'sheet-tasks') {
+  result = getSheetTasks_();
     } else if (action === 'push_price') {
       const ticker = e?.parameter?.ticker;
       const price = parseFloat(e?.parameter?.price || '0');
       result = pushPriceToSheet(ticker, price);
+    } else if (action === 'content') {
+      result = getContentFromDrive();
+    } else if (action === 'stocklist') {
+      result = getStockList_();
+    } else if (action === 'add-stock') {
+      result = addStock_(e?.parameter?.ticker, e?.parameter?.name);
+    } else if (action === 'remove-stock') {
+      result = removeStock_(e?.parameter?.ticker);
+    } else if (action === 'add-task') {
+      result = addTask_(e?.parameter || {});
+    } else if (action === 'projects') {
+      result = getProjects_();
+    } else if (action === 'add-project') {
+      result = addProject_(e?.parameter?.name, e?.parameter?.deploy, e?.parameter?.edit);
+    } else if (action === 'remove-project') {
+      result = removeProject_(e?.parameter?.id);
     } else if (action === 'status') {
       result = { status: 'ok', time: new Date().toISOString() };
     } else {
@@ -302,6 +323,142 @@ function getTasks() {
   }
 }
 
+// ─── DANH MỤC CỔ PHIẾU (mã theo dõi — thêm/xoá lưu thật vào Sheet) ─
+function getStockList_() {
+  try {
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_STOCKLIST);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_STOCKLIST);
+      sheet.getRange(1, 1, 1, 2).setValues([['Mã', 'Tên']]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+      const demo = DEFAULT_TICKERS.map(function(t) { return [t, t]; });
+      sheet.getRange(2, 1, demo.length, 2).setValues(demo);
+    }
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][0]) continue;
+      items.push({ ticker: String(data[i][0]).trim().toUpperCase(), name: data[i][1] || data[i][0] });
+    }
+    return { items: items };
+  } catch(e) {
+    return { items: DEFAULT_TICKERS.map(function(t){ return { ticker: t, name: t }; }), error: e.toString() };
+  }
+}
+
+function addStock_(ticker, name) {
+  try {
+    ticker = (ticker || '').trim().toUpperCase();
+    if (!ticker) return { success: false, error: 'Thiếu mã cổ phiếu' };
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_STOCKLIST);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_STOCKLIST);
+      sheet.getRange(1, 1, 1, 2).setValues([['Mã', 'Tên']]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+    }
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]).trim().toUpperCase() === ticker) {
+        return { success: true, items: getStockList_().items };
+      }
+    }
+    sheet.appendRow([ticker, name || ticker]);
+    return { success: true, items: getStockList_().items };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeStock_(ticker) {
+  try {
+    ticker = (ticker || '').trim().toUpperCase();
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_STOCKLIST);
+    if (!sheet) return { success: true, items: [] };
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]).trim().toUpperCase() === ticker) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true, items: getStockList_().items };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── THÊM NHIỆM VỤ (ghi thật vào Sheet NHAC_NHO) ──────────
+function addTask_(params) {
+  try {
+    const title = (params.title || '').trim();
+    if (!title) return { success: false, error: 'Thiếu tiêu đề nhiệm vụ' };
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_TASKS);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_TASKS);
+      const headers = ['Tiêu đề', 'Hạn chót', 'Xong', 'Ưu tiên', 'Ghi chú'];
+      sheet.getRange(1, 1, 1, 5).setValues([headers]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+    }
+    const due = params.due ? new Date(params.due) : '';
+    sheet.appendRow([title, due, false, params.priority || 'Bình thường', params.note || '']);
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── DỰ ÁN CỦA TÔI (tên + link deploy + link edit) ────────
+function getProjects_() {
+  try {
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_PROJECTS);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_PROJECTS);
+      sheet.getRange(1, 1, 1, 4).setValues([['ID', 'Tên', 'Link Deploy', 'Link Edit']]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+    }
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      items.push({ id: String(data[i][0] || ('P' + i)), name: data[i][1], deploy: data[i][2] || '', edit: data[i][3] || '' });
+    }
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+function addProject_(name, deploy, edit) {
+  try {
+    name = (name || '').trim();
+    if (!name) return { success: false, error: 'Thiếu tên dự án' };
+    const ss = getOrCreateSheet();
+    let sheet = ss.getSheetByName(SHEET_NAME_PROJECTS);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME_PROJECTS);
+      sheet.getRange(1, 1, 1, 4).setValues([['ID', 'Tên', 'Link Deploy', 'Link Edit']]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+    }
+    const id = 'P-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, name, (deploy || '').trim(), (edit || '').trim()]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeProject_(id) {
+  try {
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_PROJECTS);
+    if (!sheet) return { success: true };
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
 // ─── HELPER: Lấy hoặc tạo Spreadsheet ────────────────────
 function getOrCreateSheet() {
   if (SHEET_ID && SHEET_ID.length > 10) {
@@ -333,7 +490,9 @@ function logError(err) {
 // để widget "Thay đổi theo tuần/tháng" luôn có đủ dữ liệu lịch sử.
 function autoUpdateAll() {
   try {
-    getPrices(ALL_TICKERS);
+    const list = getStockList_().items || [];
+    const tickers = list.length ? list.map(function(it) { return it.ticker; }) : ALL_TICKERS;
+    getPrices(tickers);
     Logger.log('Auto update xong lúc ' + new Date().toISOString());
   } catch(e) {
     logError(e);
@@ -354,6 +513,24 @@ function createAutoUpdateTrigger() {
   Logger.log('Đã bật tự động cập nhật giá mỗi 30 phút.');
 }
 
+// ─── LẤY NỘI DUNG TIN TỨC TỪ GOOGLE DRIVE ──────────────
+function getContentFromDrive() {
+  try {
+    var folder = DriveApp.getFolderById('11nkqNxjmHXjIg_YRP8ysp2iizVB6So3-');
+    var files = folder.getFilesByName('dashboard-content.json');
+    var latest = null;
+    while (files.hasNext()) {
+      var f = files.next();
+      if (!latest || f.getDateCreated().getTime() > latest.getDateCreated().getTime()) latest = f;
+    }
+    if (!latest) throw new Error('Khong tim thay file dashboard-content.json trong thu muc');
+    var text = latest.getBlob().getDataAsString();
+    return JSON.parse(text);
+  } catch(e) {
+    return { error: e.toString(), contentTrends: [], videoIdeas: [], cryptoNews: [], socialTrends: [], keywords: [] };
+  }
+}
+
 // ─── TEST FUNCTION (chạy thủ công để kiểm tra + cấp quyền) ───
 function test_getPrices() {
   const result = getPrices(['VNM', 'VCB', 'FPT']);
@@ -368,4 +545,52 @@ function test_getTasks() {
 function test_getGmail() {
   const result = getGmailSummary(5);
   Logger.log(JSON.stringify(result, null, 2));
+}
+
+// ─── LẤY VIỆC ƯU TIÊN TỪ SHEET CONG_VIEC ──────────────────
+function getSheetTasks_() {
+try {
+const ss = getOrCreateSheet();
+let sheet = ss.getSheetByName('CONG_VIEC');
+
+if (!sheet) {
+sheet = ss.insertSheet('CONG_VIEC');
+const headers = ['ID', 'Tên công việc', 'Phụ trách', 'Ưu tiên', 'Hạn chót', 'Trạng thái', 'Tiến độ'];
+sheet.getRange(1, 1, 1, 7).setValues([headers]).setFontWeight('bold').setBackground('#1a56db').setFontColor('#ffffff');
+const today = new Date();
+const demo = [
+['CV-001', 'Họp tổ chuyên môn tuần 3', 'Cô', 'Cao', Utilities.formatDate(new Date(today.getTime()+1*86400000), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd'), 'Đang thực hiện', 60],
+['CV-002', 'Nộp kế hoạch bài dạy', 'Thầy', 'Cao', Utilities.formatDate(new Date(today.getTime()+2*86400000), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd'), 'Chưa bắt đầu', 0],
+['CV-003', 'Kiểm tra nội bộ GV Nguyễn Thị B', 'Cả hai', 'Trung bình', Utilities.formatDate(new Date(today.getTime()+5*86400000), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd'), 'Đang thực hiện', 30]
+];
+sheet.getRange(2, 1, demo.length, 7).setValues(demo);
+}
+
+const data = sheet.getDataRange().getValues();
+const tasks = [];
+
+for (let i = 1; i < data.length; i++) {
+const row = data[i];
+if (!row[1]) continue;
+const dueDate = row[4] ? Utilities.formatDate(new Date(row[4]), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd') : '';
+tasks.push({
+id: row[0] || ('CV-' + i),
+name: row[1],
+owner: row[2] || '',
+priority: row[3] || 'Bình thường',
+dueDate: dueDate,
+status: row[5] || 'Chưa bắt đầu',
+progress: Number(row[6]) || 0
+});
+}
+
+return { tasks: tasks, count: tasks.length, updated: new Date().toISOString() };
+} catch(e) {
+return { tasks: [], error: e.toString() };
+}
+}
+
+function test_getSheetTasks() {
+const result = getSheetTasks_();
+Logger.log(JSON.stringify(result, null, 2));
 }

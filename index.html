@@ -152,7 +152,7 @@ select.btn { cursor:pointer; }
       <div class="card-header">
         <div><h2><span class="card-icon" style="background:#eff6ff">📝</span> Nhắc nhở & Nhiệm vụ</h2>
         <div class="subtitle">Đồng bộ từ <a href="https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit" target="_blank" rel="noopener" id="lnkSheet1" style="color:#2563eb;text-decoration:none;font-weight:600">Google Sheet ↗</a></div></div>
-        <a href="https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit" target="_blank" rel="noopener" class="btn" style="font-size:11px;padding:4px 10px;text-decoration:none;margin-right:6px" id="lnkSheet2">📊 Mở Sheet →</a><button class="btn" onclick="loadTasks()" style="font-size:11px;padding:4px 10px">↻</button>
+        <a href="#" onclick="openAddTask();return false" class="btn btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none;margin-right:6px">+ Thêm</a><a href="https://docs.google.com/spreadsheets/d/1Bop5J-IDX0QgP9JG9NSmgtBaju1-QOJjktImfO6UpXs/edit" target="_blank" rel="noopener" class="btn" style="font-size:11px;padding:4px 10px;text-decoration:none;margin-right:6px" id="lnkSheet2">📊 Mở Sheet →</a><button class="btn" onclick="loadTasks()" style="font-size:11px;padding:4px 10px">↻</button>
       </div>
       <div class="card-body" id="task-list">
         <div class="skeleton" style="height:40px;margin-bottom:8px"></div>
@@ -233,6 +233,22 @@ select.btn { cursor:pointer; }
     </div>
   </div>
 
+  <div class="card" style="margin-bottom:16px" id="widget-projects">
+    <div class="card-header">
+      <div><h2><span class="card-icon" style="background:#eef2ff">📦</span> Dự án của tôi</h2>
+      <div class="subtitle">Link deploy &amp; chỉnh sửa các dự án cá nhân</div></div>
+      <a href="#" onclick="openAddProject();return false" class="btn btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none">+ Thêm dự án</a>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Dự án</th><th></th></tr></thead>
+        <tbody id="projects-tbody">
+          <tr><td colspan="2"><div class="skeleton" style="height:32px"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ═══ KHU VỰC THÔNG TIN TÀI CHÍNH (cuối trang) ═══ -->
   <div class="section-label">💰 Thông tin tài chính</div>
 
@@ -304,6 +320,61 @@ select.btn { cursor:pointer; }
 
 </main>
 
+<!-- ═══ MODAL: THÊM NHIỆM VỤ ═══ -->
+<div id="task-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card);border-radius:var(--radius);padding:20px;width:100%;max-width:380px;box-shadow:var(--shadow-hover)">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">📝 Thêm nhiệm vụ</h3>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">Tiêu đề</label>
+      <input type="text" id="task-title" placeholder="VD: Nộp kế hoạch bài dạy tuần 6" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">Hạn chót</label>
+        <input type="date" id="task-due" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">Ưu tiên</label>
+        <select id="task-priority" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
+          <option value="Cao">🔴 Cao</option>
+          <option value="Bình thường" selected>🔵 Bình thường</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">Ghi chú (không bắt buộc)</label>
+      <input type="text" id="task-note" placeholder="Ghi chú thêm..." style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeAddTask()">Huỷ</button>
+      <button class="btn btn-primary" id="task-save-btn" onclick="submitAddTask()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: THÊM DỰ ÁN ═══ -->
+<div id="project-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card);border-radius:var(--radius);padding:20px;width:100%;max-width:380px;box-shadow:var(--shadow-hover)">
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:12px">📦 Thêm dự án</h3>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">Tên dự án</label>
+      <input type="text" id="proj-name" placeholder="VD: Dashboard điểm danh" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">🔗 Link Deploy (nơi mở dự án)</label>
+      <input type="url" id="proj-deploy" placeholder="https://..." style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">⚙️ Link Edit (script editor / GitHub...)</label>
+      <input type="url" id="proj-edit" placeholder="https://..." style="width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--bg);color:var(--text)">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeAddProject()">Huỷ</button>
+      <button class="btn btn-primary" id="project-save-btn" onclick="submitAddProject()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let CONFIG = null;
 let CONTENT = null;
@@ -364,9 +435,10 @@ function applyConfig() {
   loadTasks();
   loadPriorityTasks();
   loadGmail();
+  loadProjects();
 }
 
-function refreshAll() { loadStocks(); loadCrypto(); loadTasks(); loadPriorityTasks(); loadGmail(); loadContentData(); showToast('🔄','Đã làm mới toàn bộ dữ liệu','info'); }
+function refreshAll() { loadStocks(); loadCrypto(); loadTasks(); loadPriorityTasks(); loadGmail(); loadContentData(); loadProjects(); showToast('🔄','Đã làm mới toàn bộ dữ liệu','info'); }
 
 // ─── Clock ──────────────────────────────────────────────
 function updateClock() {
@@ -398,6 +470,126 @@ async function loadTasks() {
     el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--danger)">⚠️ Không tải được nhiệm vụ</div>';
   }
 }
+
+function openAddTask() {
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-due').value = '';
+  document.getElementById('task-priority').value = 'Bình thường';
+  document.getElementById('task-note').value = '';
+  document.getElementById('task-modal-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('task-title').focus(), 50);
+}
+function closeAddTask() {
+  document.getElementById('task-modal-overlay').style.display = 'none';
+}
+async function submitAddTask() {
+  const title = document.getElementById('task-title').value.trim();
+  if (!title) { showToast('⚠️','Nhập tiêu đề nhiệm vụ','warn'); return; }
+  const url = CONFIG?.appScript?.stockApiUrl;
+  if (!url || url.includes('PASTE_YOUR')) { showToast('⚠️','Chưa cấu hình App Script URL','warn'); return; }
+  const btn = document.getElementById('task-save-btn');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+  try {
+    const params = new URLSearchParams({
+      action: 'add-task',
+      title: title,
+      due: document.getElementById('task-due').value,
+      priority: document.getElementById('task-priority').value,
+      note: document.getElementById('task-note').value.trim()
+    });
+    const r = await fetch(url + '?' + params.toString());
+    const res = await r.json();
+    if (!res.success) throw new Error(res.error || 'Lỗi không rõ');
+    closeAddTask();
+    showToast('✅','Đã thêm nhiệm vụ','info');
+    loadTasks();
+  } catch(e) {
+    showToast('⚠️','Lỗi lưu: ' + e.message,'warn');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Lưu';
+  }
+}
+document.getElementById('task-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAddTask();
+});
+
+// ─── Dự án của tôi (tên + link deploy + link edit) ───────
+let projectsData = [];
+async function loadProjects() {
+  const url = CONFIG?.appScript?.stockApiUrl;
+  const tbody = document.getElementById('projects-tbody');
+  if (!url || url.includes('PASTE_YOUR')) { tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;padding:16px;color:var(--text3)">⚙️ Cần cấu hình App Script URL</td></tr>'; return; }
+  try {
+    const r = await fetch(url + '?action=projects');
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    projectsData = data.items || [];
+    renderProjects();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;padding:16px;color:var(--danger)">⚠️ Không tải được danh sách</td></tr>';
+  }
+}
+function renderProjects() {
+  const tbody = document.getElementById('projects-tbody');
+  if (!projectsData.length) { tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;padding:16px;color:var(--text3)">Chưa có dự án nào</td></tr>'; return; }
+  tbody.innerHTML = projectsData.map(p => `<tr>
+    <td>${p.deploy ? `<a href="${p.deploy}" target="_blank" rel="noopener" style="color:var(--text);font-weight:600;text-decoration:none">${escapeHtml(p.name)}</a>` : `<span style="font-weight:600">${escapeHtml(p.name)}</span>`}</td>
+    <td style="text-align:right;white-space:nowrap">
+      ${p.edit ? `<a href="${p.edit}" target="_blank" rel="noopener" title="Mở trang chỉnh sửa" style="margin-right:12px;text-decoration:none;font-size:13px">⚙️</a>` : ''}
+      <a href="#" onclick="removeProject('${p.id}');return false" style="color:var(--danger);font-size:12px;text-decoration:none">Xoá</a>
+    </td>
+  </tr>`).join('');
+}
+function openAddProject() {
+  document.getElementById('proj-name').value = '';
+  document.getElementById('proj-deploy').value = '';
+  document.getElementById('proj-edit').value = '';
+  document.getElementById('project-modal-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('proj-name').focus(), 50);
+}
+function closeAddProject() {
+  document.getElementById('project-modal-overlay').style.display = 'none';
+}
+async function submitAddProject() {
+  const name = document.getElementById('proj-name').value.trim();
+  if (!name) { showToast('⚠️','Nhập tên dự án','warn'); return; }
+  const url = CONFIG?.appScript?.stockApiUrl;
+  if (!url || url.includes('PASTE_YOUR')) { showToast('⚠️','Chưa cấu hình App Script URL','warn'); return; }
+  const btn = document.getElementById('project-save-btn');
+  btn.disabled = true; btn.textContent = 'Đang lưu...';
+  try {
+    const params = new URLSearchParams({
+      action: 'add-project',
+      name: name,
+      deploy: document.getElementById('proj-deploy').value.trim(),
+      edit: document.getElementById('proj-edit').value.trim()
+    });
+    const r = await fetch(url + '?' + params.toString());
+    const res = await r.json();
+    if (!res.success) throw new Error(res.error || 'Lỗi không rõ');
+    closeAddProject();
+    showToast('✅','Đã thêm dự án','info');
+    loadProjects();
+  } catch(e) {
+    showToast('⚠️','Lỗi lưu: ' + e.message,'warn');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Lưu';
+  }
+}
+async function removeProject(id) {
+  const url = CONFIG?.appScript?.stockApiUrl;
+  if (!url) return;
+  try {
+    await fetch(url + '?action=remove-project&id=' + encodeURIComponent(id));
+    showToast('🗑','Đã xoá dự án','info');
+    loadProjects();
+  } catch(e) {
+    showToast('⚠️','Không xoá được — thử lại sau','warn');
+  }
+}
+document.getElementById('project-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAddProject();
+});
 
 // ─── Việc ưu tiên (từ Google Sheets qua Apps Script action=sheet-tasks) ─
 async function loadPriorityTasks() {
@@ -540,15 +732,22 @@ function renderKeywords() {
 
 // ─── Stocks (giá hiện tại + % thay đổi theo kỳ) ──────────
 async function loadStocks() {
-  const items = CONFIG?.stocks?.items || [];
   const stockUrl = CONFIG?.appScript?.stockApiUrl;
   const tbody = document.getElementById('stock-tbody');
-  tbody.innerHTML = items.map(() => `<tr>${Array(4).fill('<td><div class="skeleton"></div></td>').join('')}</tr>`).join('');
   if (!stockUrl || stockUrl.includes('PASTE_YOUR')) {
     document.getElementById('stock-subtitle').innerHTML = 'Chưa cấu hình App Script';
     return;
   }
   try {
+    // Lấy danh mục mã đang theo dõi (lưu thật trong Sheet, không phải file cấu hình tĩnh)
+    const rList = await fetch(stockUrl + '?action=stocklist');
+    const listData = await rList.json();
+    const items = listData.items || CONFIG?.stocks?.items || [];
+    CONFIG.stocks.items = items;
+
+    tbody.innerHTML = items.map(() => `<tr>${Array(4).fill('<td><div class="skeleton"></div></td>').join('')}</tr>`).join('');
+    if (!items.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text3)">Chưa theo dõi mã nào</td></tr>'; return; }
+
     const r = await fetch(stockUrl + '?action=prices&tickers=' + items.map(s=>s.ticker).join(','));
     stockData = await r.json();
     document.getElementById('stock-subtitle').innerHTML = 'Nguồn: CafeF qua App Script <span class="refresh-dot" style="margin-left:4px"></span>';
@@ -577,15 +776,29 @@ function renderStockTable() {
     </tr>`;
   }).join('');
 }
-function removeStock(ticker) {
-  CONFIG.stocks.items = CONFIG.stocks.items.filter(s => s.ticker !== ticker);
-  renderStockTable();
+async function removeStock(ticker) {
+  const stockUrl = CONFIG?.appScript?.stockApiUrl;
+  if (!stockUrl) return;
+  try {
+    await fetch(stockUrl + '?action=remove-stock&ticker=' + encodeURIComponent(ticker));
+    showToast('🗑',`Đã xoá mã ${ticker}`,'info');
+    loadStocks();
+  } catch(e) {
+    showToast('⚠️','Không xoá được — thử lại sau','warn');
+  }
 }
-function openAddStock() {
+async function openAddStock() {
   const ticker = prompt('Nhập mã cổ phiếu muốn thêm (VD: HPG):');
   if (!ticker) return;
-  CONFIG.stocks.items.push({ ticker: ticker.toUpperCase(), name: ticker.toUpperCase() });
-  loadStocks();
+  const stockUrl = CONFIG?.appScript?.stockApiUrl;
+  if (!stockUrl) return;
+  try {
+    await fetch(stockUrl + '?action=add-stock&ticker=' + encodeURIComponent(ticker.toUpperCase()) + '&name=' + encodeURIComponent(ticker.toUpperCase()));
+    showToast('✅',`Đã thêm mã ${ticker.toUpperCase()}`,'info');
+    loadStocks();
+  } catch(e) {
+    showToast('⚠️','Không thêm được — thử lại sau','warn');
+  }
 }
 
 // ─── Crypto (giá hiện tại + % thay đổi 5m→tháng) ─────────
