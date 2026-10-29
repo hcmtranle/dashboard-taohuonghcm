@@ -37,10 +37,44 @@ const DEFAULT_TICKERS = ['VNM', 'VCB', 'FPT', 'VRE'];
 // Toàn bộ mã cổ phiếu dashboard đang theo dõi (dùng cho tự động cập nhật)
 const ALL_TICKERS = ['VNM','VCB','FPT','VRE','ACB','MBB','SHB','VPB','VIX','HCM','SSI'];
 
+// ─── BẢO MẬT: token bắt buộc CHỈ cho action Định vị/Thêm module (mới) ──
+// Các action cũ (prices/tasks/projects/kho-items/space-items/drive-search...)
+// GIỮ NGUYÊN không cần token — vì dashboard-taohuonghcm.vercel.app và
+// dashboard-tong-hop là REPO CÔNG KHAI, gắn token vào code của chúng sẽ làm
+// lộ token (ai đọc source cũng lấy được) và phá luôn mục đích bảo vệ. Hai
+// action Định vị/Thêm module là MỚI, chỉ yourfriend-ai dùng, nên khoá được
+// triệt để: token giữ phía server (Vercel env var), gọi qua proxy /api/nak,
+// KHÔNG BAO GIỜ xuất hiện trong code client của yourfriend-ai.
+// → Nhiệm vụ/Dự án/Kho dữ liệu trên yourfriend-ai vẫn được giấu sau màn hình
+//   đăng nhập ở tầng giao diện, nhưng về bản chất backend vẫn mở như trước
+//   (rủi ro đã có từ lâu, không phải do thay đổi hôm nay) — chỉ hết hẳn khi
+//   dashboard-taohuonghcm.vercel.app (app cũ) được nghỉ hẳn.
+const NAK_API_SECRET = 'XEM_APPS_SCRIPT_EDITOR_HOAC_VERCEL_ENV_KHONG_COMMIT_GIA_TRI_THAT';
+const NAK_TOKEN_REQUIRED_ACTIONS = new Set([
+  'location-items', 'location-search', 'add-location-item', 'update-location-item', 'remove-location-item',
+  'modules', 'add-module', 'update-module', 'remove-module',
+  'links', 'add-link', 'update-link', 'remove-link',
+  'watchlist-items', 'add-watchlist-item', 'update-watchlist-item', 'remove-watchlist-item',
+  'journal-list', 'add-journal', 'update-journal', 'remove-journal',
+  'habits-list', 'add-habit', 'remove-habit', 'toggle-habit-today',
+  'bills-list', 'add-bill', 'update-bill', 'remove-bill', 'mark-bill-paid',
+  'people-list', 'add-person', 'update-person', 'remove-person',
+  'tarot-log-list', 'add-tarot-log', 'remove-tarot-log',
+]);
+function isAuthorizedNak_(token) {
+  return Boolean(token && String(token) === NAK_API_SECRET);
+}
+
 // ─── ENTRY POINT ──────────────────────────────────────────
 function doGet(e) {
   const action = (e?.parameter?.action || 'prices').toLowerCase();
   let result;
+
+  if (NAK_TOKEN_REQUIRED_ACTIONS.has(action) && !isAuthorizedNak_(e?.parameter?.token)) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ error: 'Không được phép truy cập.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 
   try {
     if (action === 'prices') {
@@ -67,6 +101,10 @@ function doGet(e) {
       result = removeStock_(e?.parameter?.ticker);
     } else if (action === 'add-task') {
       result = addTask_(e?.parameter || {});
+    } else if (action === 'toggle-task') {
+      result = toggleTask_(e?.parameter?.row, e?.parameter?.done);
+    } else if (action === 'remove-task') {
+      result = removeTask_(e?.parameter?.row);
     } else if (action === 'projects') {
       result = getProjects_();
     } else if (action === 'add-project') {
@@ -93,6 +131,80 @@ function doGet(e) {
       result = removeKhoItem_(e?.parameter?.id);
     } else if (action === 'drive-search') {
       result = driveSearch_(e?.parameter?.query, e?.parameter?.folderId);
+    } else if (action === 'location-items') {
+      result = getLocationItems_();
+    } else if (action === 'location-search') {
+      result = searchLocationItems_(e?.parameter?.query);
+    } else if (action === 'add-location-item') {
+      result = addLocationItem_(e?.parameter?.name, e?.parameter?.category, e?.parameter?.location, e?.parameter?.note, e?.parameter?.imageUrl);
+    } else if (action === 'update-location-item') {
+      result = updateLocationItem_(e?.parameter?.id, e?.parameter?.name, e?.parameter?.category, e?.parameter?.location, e?.parameter?.note, e?.parameter?.imageUrl);
+    } else if (action === 'remove-location-item') {
+      result = removeLocationItem_(e?.parameter?.id);
+    } else if (action === 'modules') {
+      result = getModules_();
+    } else if (action === 'add-module') {
+      result = addModule_(e?.parameter?.name, e?.parameter?.icon, e?.parameter?.type, e?.parameter?.config, e?.parameter?.order);
+    } else if (action === 'update-module') {
+      result = updateModule_(e?.parameter?.id, e?.parameter?.name, e?.parameter?.icon, e?.parameter?.type, e?.parameter?.config, e?.parameter?.order);
+    } else if (action === 'remove-module') {
+      result = removeModule_(e?.parameter?.id);
+    } else if (action === 'links') {
+      result = getLinks_();
+    } else if (action === 'add-link') {
+      result = addLink_(e?.parameter?.name, e?.parameter?.type, e?.parameter?.url, e?.parameter?.project, e?.parameter?.note);
+    } else if (action === 'update-link') {
+      result = updateLink_(e?.parameter?.id, e?.parameter?.name, e?.parameter?.type, e?.parameter?.url, e?.parameter?.project, e?.parameter?.note);
+    } else if (action === 'remove-link') {
+      result = removeLink_(e?.parameter?.id);
+    } else if (action === 'watchlist-items') {
+      result = getWatchlistItems_();
+    } else if (action === 'add-watchlist-item') {
+      result = addWatchlistItem_(e?.parameter?.symbol, e?.parameter?.buyDate, e?.parameter?.quantity, e?.parameter?.buyPrice, e?.parameter?.note);
+    } else if (action === 'update-watchlist-item') {
+      result = updateWatchlistItem_(e?.parameter?.id, e?.parameter?.symbol, e?.parameter?.buyDate, e?.parameter?.quantity, e?.parameter?.buyPrice, e?.parameter?.note);
+    } else if (action === 'remove-watchlist-item') {
+      result = removeWatchlistItem_(e?.parameter?.id);
+    } else if (action === 'journal-list') {
+      result = getJournalEntries_();
+    } else if (action === 'add-journal') {
+      result = addJournalEntry_(e?.parameter?.ngay, e?.parameter?.noiDung, e?.parameter?.tamTrang);
+    } else if (action === 'update-journal') {
+      result = updateJournalEntry_(e?.parameter?.id, e?.parameter?.ngay, e?.parameter?.noiDung, e?.parameter?.tamTrang);
+    } else if (action === 'remove-journal') {
+      result = removeJournalEntry_(e?.parameter?.id);
+    } else if (action === 'habits-list') {
+      result = getHabits_();
+    } else if (action === 'add-habit') {
+      result = addHabit_(e?.parameter?.name, e?.parameter?.icon);
+    } else if (action === 'remove-habit') {
+      result = removeHabit_(e?.parameter?.id);
+    } else if (action === 'toggle-habit-today') {
+      result = toggleHabitToday_(e?.parameter?.habitId);
+    } else if (action === 'bills-list') {
+      result = getBills_();
+    } else if (action === 'add-bill') {
+      result = addBill_(e?.parameter?.name, e?.parameter?.amount, e?.parameter?.due, e?.parameter?.cycle, e?.parameter?.note);
+    } else if (action === 'update-bill') {
+      result = updateBill_(e?.parameter?.id, e?.parameter?.name, e?.parameter?.amount, e?.parameter?.due, e?.parameter?.cycle, e?.parameter?.note);
+    } else if (action === 'remove-bill') {
+      result = removeBill_(e?.parameter?.id);
+    } else if (action === 'mark-bill-paid') {
+      result = markBillPaid_(e?.parameter?.id);
+    } else if (action === 'people-list') {
+      result = getPeople_();
+    } else if (action === 'add-person') {
+      result = addPerson_(e?.parameter?.name, e?.parameter?.relation, e?.parameter?.birthday, e?.parameter?.contact, e?.parameter?.note);
+    } else if (action === 'update-person') {
+      result = updatePerson_(e?.parameter?.id, e?.parameter?.name, e?.parameter?.relation, e?.parameter?.birthday, e?.parameter?.contact, e?.parameter?.note);
+    } else if (action === 'remove-person') {
+      result = removePerson_(e?.parameter?.id);
+    } else if (action === 'tarot-log-list') {
+      result = getTarotLog_();
+    } else if (action === 'add-tarot-log') {
+      result = addTarotLog_(e?.parameter?.ngay, e?.parameter?.card, e?.parameter?.reversed, e?.parameter?.note);
+    } else if (action === 'remove-tarot-log') {
+      result = removeTarotLog_(e?.parameter?.id);
     } else if (action === 'status') {
       result = { status: 'ok', time: new Date().toISOString() };
     } else {
@@ -330,6 +442,7 @@ function getTasks() {
       const isDone = row[2] === true || row[2] === 'TRUE' || row[2] === '✓';
       const priority = row[3] || 'Bình thường';
       tasks.push({
+        row: i + 1,
         title: row[0],
         due: (priority === 'Cao' ? '⚠️ ' : '📅 ') + due,
         done: isDone,
@@ -421,6 +534,35 @@ function addTask_(params) {
     }
     const due = params.due ? new Date(params.due) : '';
     sheet.appendRow([title, due, false, params.priority || 'Bình thường', params.note || '']);
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── NHIỆM VỤ: đổi trạng thái xong / xoá (dùng ID tạm = số dòng, vì NHAC_NHO không có cột ID) ─
+function toggleTask_(rowIndex, done) {
+  try {
+    const i = parseInt(rowIndex, 10);
+    if (!i || i < 2) return { success: false, error: 'Thiếu dòng nhiệm vụ' };
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_TASKS);
+    if (!sheet) return { success: false, error: 'Chưa có danh sách nhiệm vụ' };
+    sheet.getRange(i, 3).setValue(done === 'true' || done === true);
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeTask_(rowIndex) {
+  try {
+    const i = parseInt(rowIndex, 10);
+    if (!i || i < 2) return { success: false, error: 'Thiếu dòng nhiệm vụ' };
+    const ss = getOrCreateSheet();
+    const sheet = ss.getSheetByName(SHEET_NAME_TASKS);
+    if (!sheet) return { success: true };
+    sheet.deleteRow(i);
     return { success: true };
   } catch(e) {
     return { success: false, error: e.toString() };
@@ -660,6 +802,379 @@ function removeKhoItem_(id) {
   }
 }
 
+// ─── YOURFRIEND.AI: ĐỊNH VỊ (tra vị trí vật dụng / hồ sơ) ──
+const SHEET_NAME_VITRI = 'VI_TRI';
+const VITRI_HEADER = ['id', 'ten', 'danh_muc', 'vi_tri', 'ghi_chu', 'anh_url', 'cap_nhat_luc'];
+
+function _ensureVitriSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_VITRI);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_VITRI);
+    sheet.getRange(1, 1, 1, VITRI_HEADER.length).setValues([VITRI_HEADER]).setFontWeight('bold').setBackground('#b45309').setFontColor('#ffffff');
+  }
+  return sheet;
+}
+
+function getLocationItems_() {
+  try {
+    const sheet = _ensureVitriSheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      items.push({
+        id: String(data[i][0] || ('V' + i)),
+        name: data[i][1],
+        category: data[i][2] || '',
+        location: data[i][3] || '',
+        note: data[i][4] || '',
+        imageUrl: data[i][5] || '',
+        updatedAt: data[i][6] || '',
+      });
+    }
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+function addLocationItem_(name, category, location, note, imageUrl) {
+  try {
+    name = (name || '').trim();
+    location = (location || '').trim();
+    if (!name) return { success: false, error: 'Thiếu tên vật dụng/hồ sơ' };
+    if (!location) return { success: false, error: 'Thiếu vị trí' };
+    const sheet = _ensureVitriSheet_();
+    const id = 'V-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    const now = new Date().toISOString();
+    sheet.appendRow([id, name, (category || '').trim(), location, (note || '').trim(), (imageUrl || '').trim(), now]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function updateLocationItem_(id, name, category, location, note, imageUrl) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    location = (location || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    if (!location) return { success: false, error: 'Thiếu vị trí' };
+    const sheet = _ensureVitriSheet_();
+    const data = sheet.getDataRange().getValues();
+    const now = new Date().toISOString();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 6).setValues([[name, (category || '').trim(), location, (note || '').trim(), (imageUrl || '').trim(), now]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeLocationItem_(id) {
+  try {
+    const sheet = _ensureVitriSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// Tìm theo tên / danh mục / vị trí / ghi chú — không phân biệt hoa thường, không cần dấu đúng tuyệt đối
+function searchLocationItems_(query) {
+  try {
+    query = (query || '').trim().toLowerCase();
+    const all = getLocationItems_();
+    if (!query) return all;
+    const items = all.items.filter(function(it) {
+      return [it.name, it.category, it.location, it.note].some(function(f) {
+        return String(f || '').toLowerCase().indexOf(query) >= 0;
+      });
+    });
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: DANH MỤC THEO DÕI CỔ PHIẾU (Bộ lọc cổ phiếu) ──
+// Chỉ lưu dữ liệu Thầy/Cô tự nhập (mã, ngày mua, số lượng, giá mua, ghi
+// chú). Giá hiện tại/lãi-lỗ/tín hiệu BOT tính trực tiếp từ SSI FastConnect
+// phía Vercel (api/stock-screener.js) ngay lúc hiển thị, không lưu ở đây.
+const SHEET_NAME_WATCHLIST = 'DANH_MUC_THEO_DOI_CP';
+const WATCHLIST_HEADER = ['id', 'ma', 'ngay_mua', 'so_luong', 'gia_mua', 'ghi_chu', 'cap_nhat_luc'];
+
+function _ensureWatchlistSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_WATCHLIST);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_WATCHLIST);
+    sheet.getRange(1, 1, 1, WATCHLIST_HEADER.length).setValues([WATCHLIST_HEADER]).setFontWeight('bold').setBackground('#1d4ed8').setFontColor('#ffffff');
+  }
+  return sheet;
+}
+
+function getWatchlistItems_() {
+  try {
+    const sheet = _ensureWatchlistSheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      items.push({
+        id: String(data[i][0] || ('W' + i)),
+        symbol: String(data[i][1]).toUpperCase(),
+        buyDate: data[i][2] || '',
+        quantity: Number(data[i][3]) || 0,
+        buyPrice: Number(data[i][4]) || 0,
+        note: data[i][5] || '',
+        updatedAt: data[i][6] || '',
+      });
+    }
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+function addWatchlistItem_(symbol, buyDate, quantity, buyPrice, note) {
+  try {
+    symbol = (symbol || '').trim().toUpperCase();
+    if (!symbol) return { success: false, error: 'Thiếu mã cổ phiếu' };
+    const sheet = _ensureWatchlistSheet_();
+    const id = 'W-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    const now = new Date().toISOString();
+    sheet.appendRow([id, symbol, (buyDate || '').trim(), Number(quantity) || 0, Number(buyPrice) || 0, (note || '').trim(), now]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function updateWatchlistItem_(id, symbol, buyDate, quantity, buyPrice, note) {
+  try {
+    id = (id || '').trim();
+    symbol = (symbol || '').trim().toUpperCase();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!symbol) return { success: false, error: 'Thiếu mã cổ phiếu' };
+    const sheet = _ensureWatchlistSheet_();
+    const data = sheet.getDataRange().getValues();
+    const now = new Date().toISOString();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 6).setValues([[symbol, (buyDate || '').trim(), Number(quantity) || 0, Number(buyPrice) || 0, (note || '').trim(), now]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeWatchlistItem_(id) {
+  try {
+    const sheet = _ensureWatchlistSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: THÊM MODULE (Thầy tự đăng ký module mới, không cần code) ─
+const SHEET_NAME_MODULES = 'MODULES';
+const MODULES_HEADER = ['id', 'ten', 'icon', 'loai', 'cau_hinh', 'thu_tu'];
+
+function _ensureModulesSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_MODULES);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_MODULES);
+    sheet.getRange(1, 1, 1, MODULES_HEADER.length).setValues([MODULES_HEADER]).setFontWeight('bold').setBackground('#6d28d9').setFontColor('#ffffff');
+  }
+  return sheet;
+}
+
+// loai hợp lệ: 'link' (mở tab mới), 'list' (CRUD đơn giản, tự lưu vào 1 sheet con theo 'cau_hinh'), 'embed' (nhúng iframe theo URL ở 'cau_hinh')
+function getModules_() {
+  try {
+    const sheet = _ensureModulesSheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      items.push({
+        id: String(data[i][0] || ('M' + i)),
+        name: data[i][1],
+        icon: data[i][2] || '🧩',
+        type: data[i][3] || 'link',
+        config: data[i][4] || '',
+        order: Number(data[i][5] || 0),
+      });
+    }
+    items.sort(function(a, b) { return a.order - b.order; });
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+function addModule_(name, icon, type, config, order) {
+  try {
+    name = (name || '').trim();
+    type = (type || 'link').trim().toLowerCase();
+    if (!name) return { success: false, error: 'Thiếu tên module' };
+    if (['link', 'list', 'embed'].indexOf(type) < 0) return { success: false, error: 'Loại module không hợp lệ' };
+    const sheet = _ensureModulesSheet_();
+    const id = 'M-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, name, (icon || '🧩').trim(), type, (config || '').trim(), Number(order || 0)]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function updateModule_(id, name, icon, type, config, order) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    type = (type || 'link').trim().toLowerCase();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    const sheet = _ensureModulesSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 5).setValues([[name, (icon || '🧩').trim(), type, (config || '').trim(), Number(order || 0)]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy module' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeModule_(id) {
+  try {
+    const sheet = _ensureModulesSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: QUẢN LÝ DỮ LIỆU (chỉ Admin — tập hợp link edit/docx/
+// sheet/deploy của mọi dự án để dễ tra cứu, không hiển thị cho Thầy/Cô) ─
+const SHEET_NAME_LINKS = 'LINKS';
+const LINKS_HEADER = ['id', 'ten', 'loai', 'url', 'du_an', 'ghi_chu', 'cap_nhat'];
+
+function _ensureLinksSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_LINKS);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_LINKS);
+    sheet.getRange(1, 1, 1, LINKS_HEADER.length).setValues([LINKS_HEADER]).setFontWeight('bold').setBackground('#1f2937').setFontColor('#ffffff');
+  }
+  return sheet;
+}
+
+// loai gợi ý: 'edit' (link sửa code/editor), 'docx' (tài liệu), 'sheet' (Google Sheet),
+// 'deploy' (trang live), 'github' (repo), 'apps_script' (Apps Script Editor), 'khac'
+function getLinks_() {
+  try {
+    const sheet = _ensureLinksSheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      items.push({
+        id: String(data[i][0] || ('L' + i)),
+        name: data[i][1],
+        type: data[i][2] || 'khac',
+        url: data[i][3] || '',
+        project: data[i][4] || '',
+        note: data[i][5] || '',
+        updatedAt: data[i][6] || '',
+      });
+    }
+    return { items: items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+
+function addLink_(name, type, url, project, note) {
+  try {
+    name = (name || '').trim();
+    url = (url || '').trim();
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    if (!url) return { success: false, error: 'Thiếu URL' };
+    const sheet = _ensureLinksSheet_();
+    const id = 'L-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    const now = new Date().toISOString();
+    sheet.appendRow([id, name, (type || 'khac').trim(), url, (project || '').trim(), (note || '').trim(), now]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function updateLink_(id, name, type, url, project, note) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    url = (url || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    if (!url) return { success: false, error: 'Thiếu URL' };
+    const sheet = _ensureLinksSheet_();
+    const data = sheet.getDataRange().getValues();
+    const now = new Date().toISOString();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 6).setValues([[name, (type || 'khac').trim(), url, (project || '').trim(), (note || '').trim(), now]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+function removeLink_(id) {
+  try {
+    const sheet = _ensureLinksSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
 // ─── TÌM KIẾM TOÀN DRIVE (tên + nội dung file) ────────────
 // folderId (tuỳ chọn): giới hạn quét trong 1 thư mục + thư mục con (đỡ chậm với Drive nhiều file).
 // Chấp nhận folderId thô hoặc nguyên link Drive (tự tách ID ra).
@@ -736,6 +1251,448 @@ function driveSearch_(query, folderIdRaw) {
     return { items: Object.values(found).slice(0, MAX_RESULTS), scoped: !!folderId };
   } catch(e) {
     return { items: [], error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: helper ngày tháng (tính theo chuỗi 'yyyy-MM-dd', không phụ thuộc timezone server) ──
+function _todayStr_() {
+  return Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd');
+}
+// Google Sheets tự nhận diện chuỗi "yyyy-MM-dd" ghi vào ô và CHUYỂN THÀNH kiểu Date
+// (dù appendRow truyền vào là string thuần) — đọc lại qua getValues() sẽ ra Date object,
+// không phải string gốc. Luôn đọc ô "ngày" qua helper này để lấy lại đúng 'yyyy-MM-dd'
+// bất kể ô đang là Date hay vẫn là string (ô cũ/ô người dùng gõ tay).
+function _cellDateStr_(val) {
+  if (val instanceof Date) return Utilities.formatDate(val, 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd');
+  return String(val || '').trim();
+}
+function _addDays_(dateStr, n) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return Utilities.formatDate(new Date(Date.UTC(y, m - 1, d + n)), 'UTC', 'yyyy-MM-dd');
+}
+function _addMonths_(dateStr, n) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  let tm = m - 1 + n;
+  let ty = y + Math.floor(tm / 12);
+  tm = ((tm % 12) + 12) % 12;
+  const lastDay = new Date(Date.UTC(ty, tm + 1, 0)).getUTCDate();
+  return Utilities.formatDate(new Date(Date.UTC(ty, tm, Math.min(d, lastDay))), 'UTC', 'yyyy-MM-dd');
+}
+function _computeStreak_(dateSet, todayStr) {
+  let cursor = todayStr;
+  if (!dateSet.has(cursor)) {
+    cursor = _addDays_(cursor, -1);
+    if (!dateSet.has(cursor)) return 0;
+  }
+  let streak = 0;
+  while (dateSet.has(cursor)) { streak++; cursor = _addDays_(cursor, -1); }
+  return streak;
+}
+
+// ─── YOURFRIEND.AI: NHẬT KÝ ──────────────────────────────
+const SHEET_NAME_NHATKY = 'NHAT_KY';
+const NHATKY_HEADER = ['id', 'ngay', 'noi_dung', 'tam_trang', 'created_at'];
+function _ensureNhatKySheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_NHATKY);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_NHATKY);
+    sheet.getRange(1, 1, 1, NHATKY_HEADER.length).setValues([NHATKY_HEADER]).setFontWeight('bold').setBackground('#7c3aed').setFontColor('#ffffff');
+    sheet.getRange(2, 2, 4998, 1).setNumberFormat('@'); // cột "ngay" giữ dạng text, tránh Sheets tự đổi thành Date
+  }
+  return sheet;
+}
+function getJournalEntries_() {
+  try {
+    const sheet = _ensureNhatKySheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    const dateSet = new Set();
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      const ngay = _cellDateStr_(data[i][1]);
+      dateSet.add(ngay);
+      items.push({ id: String(data[i][0] || ('N' + i)), ngay, noiDung: data[i][2] || '', tamTrang: data[i][3] || '', createdAt: data[i][4] || '' });
+    }
+    items.sort((a, b) => b.ngay.localeCompare(a.ngay));
+    return { items: items.slice(0, 120), streak: _computeStreak_(dateSet, _todayStr_()) };
+  } catch(e) {
+    return { items: [], streak: 0, error: e.toString() };
+  }
+}
+function addJournalEntry_(ngay, noiDung, tamTrang) {
+  try {
+    ngay = (ngay || _todayStr_()).trim();
+    noiDung = (noiDung || '').trim();
+    if (!noiDung) return { success: false, error: 'Thiếu nội dung' };
+    const sheet = _ensureNhatKySheet_();
+    const id = 'N-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, ngay, noiDung, (tamTrang || '').trim(), new Date().toISOString()]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function updateJournalEntry_(id, ngay, noiDung, tamTrang) {
+  try {
+    id = (id || '').trim();
+    noiDung = (noiDung || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!noiDung) return { success: false, error: 'Thiếu nội dung' };
+    const sheet = _ensureNhatKySheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 3).setValues([[(ngay || data[i][1]).trim(), noiDung, (tamTrang || '').trim()]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function removeJournalEntry_(id) {
+  try {
+    const sheet = _ensureNhatKySheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: THÓI QUEN ────────────────────────────
+const SHEET_NAME_THOIQUEN = 'THOI_QUEN';
+const SHEET_NAME_THOIQUEN_LOG = 'THOI_QUEN_LOG';
+const THOIQUEN_HEADER = ['id', 'ten', 'icon', 'created_at'];
+const THOIQUEN_LOG_HEADER = ['id', 'habit_id', 'ngay', 'created_at'];
+function _ensureHabitSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_THOIQUEN);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_THOIQUEN);
+    sheet.getRange(1, 1, 1, THOIQUEN_HEADER.length).setValues([THOIQUEN_HEADER]).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
+  }
+  return sheet;
+}
+function _ensureHabitLogSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_THOIQUEN_LOG);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_THOIQUEN_LOG);
+    sheet.getRange(1, 1, 1, THOIQUEN_LOG_HEADER.length).setValues([THOIQUEN_LOG_HEADER]).setFontWeight('bold').setBackground('#0f766e').setFontColor('#ffffff');
+    sheet.getRange(2, 3, 4998, 1).setNumberFormat('@'); // cột "ngay" giữ dạng text
+  }
+  return sheet;
+}
+function getHabits_() {
+  try {
+    const habitSheet = _ensureHabitSheet_();
+    const logSheet = _ensureHabitLogSheet_();
+    const habitData = habitSheet.getDataRange().getValues();
+    const logData = logSheet.getDataRange().getValues();
+    const todayStr = _todayStr_();
+    const logsByHabit = {};
+    for (let i = 1; i < logData.length; i++) {
+      const hid = String(logData[i][1] || '');
+      if (!hid) continue;
+      if (!logsByHabit[hid]) logsByHabit[hid] = new Set();
+      logsByHabit[hid].add(_cellDateStr_(logData[i][2]));
+    }
+    const items = [];
+    for (let i = 1; i < habitData.length; i++) {
+      if (!habitData[i][1]) continue;
+      const id = String(habitData[i][0] || ('H' + i));
+      const dateSet = logsByHabit[id] || new Set();
+      items.push({
+        id, name: habitData[i][1], icon: habitData[i][2] || '✅',
+        checkedToday: dateSet.has(todayStr),
+        streak: _computeStreak_(dateSet, todayStr),
+      });
+    }
+    return { items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+function addHabit_(name, icon) {
+  try {
+    name = (name || '').trim();
+    if (!name) return { success: false, error: 'Thiếu tên thói quen' };
+    const sheet = _ensureHabitSheet_();
+    const id = 'H-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, name, (icon || '✅').trim(), new Date().toISOString()]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function removeHabit_(id) {
+  try {
+    id = (id || '').trim();
+    const sheet = _ensureHabitSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    const logSheet = _ensureHabitLogSheet_();
+    const logData = logSheet.getDataRange().getValues();
+    for (let i = logData.length - 1; i >= 1; i--) {
+      if (String(logData[i][1]) === id) { logSheet.deleteRow(i + 1); }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function toggleHabitToday_(habitId) {
+  try {
+    habitId = (habitId || '').trim();
+    if (!habitId) return { success: false, error: 'Thiếu ID thói quen' };
+    const logSheet = _ensureHabitLogSheet_();
+    const data = logSheet.getDataRange().getValues();
+    const todayStr = _todayStr_();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][1]) === habitId && _cellDateStr_(data[i][2]) === todayStr) {
+        logSheet.deleteRow(i + 1);
+        return { success: true, checked: false };
+      }
+    }
+    const id = 'HL-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    logSheet.appendRow([id, habitId, todayStr, new Date().toISOString()]);
+    return { success: true, checked: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: HOÁ ĐƠN & ĐĂNG KÝ ────────────────────
+const SHEET_NAME_HOADON = 'HOA_DON';
+const HOADON_HEADER = ['id', 'ten', 'so_tien', 'han', 'chu_ky', 'ghi_chu', 'da_thanh_toan_luc'];
+function _ensureBillSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_HOADON);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_HOADON);
+    sheet.getRange(1, 1, 1, HOADON_HEADER.length).setValues([HOADON_HEADER]).setFontWeight('bold').setBackground('#b45309').setFontColor('#ffffff');
+    sheet.getRange(2, 4, 4998, 1).setNumberFormat('@'); // cột "han" giữ dạng text
+    sheet.getRange(2, 7, 4998, 1).setNumberFormat('@'); // cột "da_thanh_toan_luc" giữ dạng text
+  }
+  return sheet;
+}
+function getBills_() {
+  try {
+    const sheet = _ensureBillSheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      items.push({
+        id: String(data[i][0] || ('B' + i)), name: data[i][1], amount: Number(data[i][2]) || 0,
+        due: _cellDateStr_(data[i][3]), cycle: data[i][4] || '', note: data[i][5] || '', lastPaid: _cellDateStr_(data[i][6]),
+      });
+    }
+    items.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+    return { items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+function addBill_(name, amount, due, cycle, note) {
+  try {
+    name = (name || '').trim();
+    if (!name) return { success: false, error: 'Thiếu tên hoá đơn' };
+    const sheet = _ensureBillSheet_();
+    const id = 'B-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, name, Number(amount) || 0, (due || '').trim(), (cycle || '').trim(), (note || '').trim(), '']);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function updateBill_(id, name, amount, due, cycle, note) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!name) return { success: false, error: 'Thiếu tên hoá đơn' };
+    const sheet = _ensureBillSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 5).setValues([[name, Number(amount) || 0, (due || '').trim(), (cycle || '').trim(), (note || '').trim()]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function removeBill_(id) {
+  try {
+    const sheet = _ensureBillSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function markBillPaid_(id) {
+  try {
+    id = (id || '').trim();
+    const sheet = _ensureBillSheet_();
+    const data = sheet.getDataRange().getValues();
+    const todayStr = _todayStr_();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        const due = _cellDateStr_(data[i][3]);
+        const cycle = data[i][4] || '';
+        let newDue = due;
+        if (cycle === 'thang' && due) newDue = _addMonths_(due, 1);
+        else if (cycle === 'nam' && due) newDue = _addMonths_(due, 12);
+        sheet.getRange(i + 1, 4, 1, 1).setValues([[newDue]]);
+        sheet.getRange(i + 1, 7, 1, 1).setValues([[todayStr]]);
+        return { success: true, newDue };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: MỌI NGƯỜI ────────────────────────────
+const SHEET_NAME_MOINGUOI = 'MOI_NGUOI';
+const MOINGUOI_HEADER = ['id', 'ten', 'moi_quan_he', 'sinh_nhat', 'lien_he', 'ghi_chu'];
+function _ensurePeopleSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_MOINGUOI);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_MOINGUOI);
+    sheet.getRange(1, 1, 1, MOINGUOI_HEADER.length).setValues([MOINGUOI_HEADER]).setFontWeight('bold').setBackground('#be185d').setFontColor('#ffffff');
+    sheet.getRange(2, 4, 4998, 1).setNumberFormat('@'); // cột "sinh_nhat" giữ dạng text
+  }
+  return sheet;
+}
+function getPeople_() {
+  try {
+    const sheet = _ensurePeopleSheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][1]) continue;
+      items.push({
+        id: String(data[i][0] || ('P' + i)), name: data[i][1], relation: data[i][2] || '',
+        birthday: _cellDateStr_(data[i][3]), contact: data[i][4] || '', note: data[i][5] || '',
+      });
+    }
+    return { items };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+function addPerson_(name, relation, birthday, contact, note) {
+  try {
+    name = (name || '').trim();
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    const sheet = _ensurePeopleSheet_();
+    const id = 'P-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, name, (relation || '').trim(), (birthday || '').trim(), (contact || '').trim(), (note || '').trim()]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function updatePerson_(id, name, relation, birthday, contact, note) {
+  try {
+    id = (id || '').trim();
+    name = (name || '').trim();
+    if (!id) return { success: false, error: 'Thiếu ID' };
+    if (!name) return { success: false, error: 'Thiếu tên' };
+    const sheet = _ensurePeopleSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === id) {
+        sheet.getRange(i + 1, 2, 1, 5).setValues([[name, (relation || '').trim(), (birthday || '').trim(), (contact || '').trim(), (note || '').trim()]]);
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'Không tìm thấy mục' };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function removePerson_(id) {
+  try {
+    const sheet = _ensurePeopleSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+
+// ─── YOURFRIEND.AI: NHẬT KÝ LÁ BÀI (Tarot) ───────────────
+const SHEET_NAME_TAROTLOG = 'TAROT_LOG';
+const TAROTLOG_HEADER = ['id', 'ngay', 'la_bai', 'nguoc_xuoi', 'ghi_chu', 'created_at'];
+function _ensureTarotLogSheet_() {
+  const ss = getOrCreateSheet();
+  let sheet = ss.getSheetByName(SHEET_NAME_TAROTLOG);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME_TAROTLOG);
+    sheet.getRange(1, 1, 1, TAROTLOG_HEADER.length).setValues([TAROTLOG_HEADER]).setFontWeight('bold').setBackground('#5b21b6').setFontColor('#ffffff');
+    sheet.getRange(2, 2, 4998, 1).setNumberFormat('@'); // cột "ngay" giữ dạng text
+  }
+  return sheet;
+}
+function getTarotLog_() {
+  try {
+    const sheet = _ensureTarotLogSheet_();
+    const data = sheet.getDataRange().getValues();
+    const items = [];
+    for (let i = 1; i < data.length; i++) {
+      if (!data[i][2]) continue;
+      items.push({ id: String(data[i][0] || ('T' + i)), ngay: _cellDateStr_(data[i][1]), card: data[i][2], reversed: data[i][3] === true || data[i][3] === 'true', note: data[i][4] || '' });
+    }
+    items.sort((a, b) => (b.ngay || '').localeCompare(a.ngay || ''));
+    return { items: items.slice(0, 60) };
+  } catch(e) {
+    return { items: [], error: e.toString() };
+  }
+}
+function addTarotLog_(ngay, card, reversed, note) {
+  try {
+    card = (card || '').trim();
+    if (!card) return { success: false, error: 'Thiếu tên lá bài' };
+    const sheet = _ensureTarotLogSheet_();
+    const id = 'TL-' + Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyyMMddHHmmss');
+    sheet.appendRow([id, (ngay || _todayStr_()).trim(), card, reversed === true || reversed === 'true', (note || '').trim(), new Date().toISOString()]);
+    return { success: true, id: id };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
+}
+function removeTarotLog_(id) {
+  try {
+    const sheet = _ensureTarotLogSheet_();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (String(data[i][0]) === id) { sheet.deleteRow(i + 1); break; }
+    }
+    return { success: true };
+  } catch(e) {
+    return { success: false, error: e.toString() };
   }
 }
 
